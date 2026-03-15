@@ -86,9 +86,9 @@
           C = matrix of shape [vocab_size, embed_dim]<br><br>
           <span class="comment">// Look up embedding for token 'e' (ID = 1)</span><br>
           embedding('e') = C[1] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
-          <span class="comment">// For a context of 6 characters, concatenate their embeddings</span><br>
-          input_vector = concat(C[token_0], C[token_1], ..., C[token_5])<br>
-          input_vector has size = 6 × embed_dim = 72 numbers
+          <span class="comment">// For a context of 8 characters, concatenate their embeddings</span><br>
+          input_vector = concat(C[token_0], C[token_1], ..., C[token_7])<br>
+          input_vector has size = 8 × embed_dim = 128 numbers
         </div>
       </section>
 
@@ -102,18 +102,18 @@
         </p>
         <div class="card">
           <div class="architecture-diagram">
-            <div class="arch-block input">Characters<br><small>6 tokens</small></div>
+            <div class="arch-block input">Characters<br><small>8 tokens</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block embed">Embeddings<br><small>6 × 12 = 72</small></div>
+            <div class="arch-block embed">Embeddings<br><small>8 × 16 = 128</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block hidden">Hidden Layer<br><small>100 neurons, tanh</small></div>
+            <div class="arch-block hidden">Hidden Layer<br><small>128 neurons, tanh</small></div>
             <span class="arch-arrow">→</span>
             <div class="arch-block output">Predictions<br><small>softmax → probs</small></div>
           </div>
         </div>
         <div class="math-block">
           <span class="comment">// Forward pass through the network</span><br>
-          hidden = tanh(input_vector × W1 + b1) &nbsp; <span class="comment">// 100 neurons learn patterns</span><br>
+          hidden = tanh(input_vector × W1 + b1) &nbsp; <span class="comment">// 128 neurons learn patterns</span><br>
           logits = hidden × W2 + b2 &nbsp; <span class="comment">// raw scores for each character</span><br>
           probs = softmax(logits) &nbsp; <span class="comment">// convert to probabilities (sum to 1)</span><br><br>
           <span class="comment">// Softmax formula: turns any numbers into probabilities</span><br>
@@ -125,7 +125,7 @@
       <section class="concept-section">
         <h2><span class="step-num">5</span> Training</h2>
         <p>
-          Training is how the model learns. We show it examples from the text: "given these 6 characters,
+          Training is how the model learns. We show it examples from the text: "given these 8 characters,
           the next one should be X." The model makes a prediction, we measure how wrong it was (the <strong>loss</strong>),
           and then nudge all the parameters slightly to make a better prediction next time. This is called
           <strong>gradient descent</strong>.
@@ -223,15 +223,15 @@
           <div class="control-group">
             <label>Learning Rate</label>
             <div class="slider-row">
-              <input type="range" id="slider-lr" min="0.001" max="0.1" step="0.001" value="0.05">
-              <span class="slider-val" id="val-lr">0.050</span>
+              <input type="range" id="slider-lr" min="0.001" max="0.05" step="0.001" value="0.01">
+              <span class="slider-val" id="val-lr">0.010</span>
             </div>
           </div>
           <div class="control-group">
             <label>Training Speed</label>
             <div class="slider-row">
-              <input type="range" id="slider-speed" min="1" max="50" step="1" value="5">
-              <span class="slider-val" id="val-speed">5</span>
+              <input type="range" id="slider-speed" min="1" max="50" step="1" value="10">
+              <span class="slider-val" id="val-speed">10</span>
               <span style="font-size:11px; color:var(--text-muted)">steps/frame</span>
             </div>
           </div>

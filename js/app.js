@@ -6,7 +6,7 @@ const app = {
   model: null,
   training: false,
   trainTimer: null,
-  stepsPerFrame: 5,
+  stepsPerFrame: 10,
   currentPage: 'learn',
 
   init() {
@@ -363,7 +363,7 @@ function binarySearch(arr, target) {
   updateTrainingViz(result) {
     // Step counter & loss
     document.getElementById('step-counter').textContent = `Step: ${result.step.toLocaleString()}`;
-    document.getElementById('loss-value').textContent = `Loss: ${result.avgLoss.toFixed(4)}`;
+    document.getElementById('loss-value').textContent = `Loss: ${result.avgLoss.toFixed(4)} · LR: ${result.effectiveLR.toFixed(4)}`;
 
     // Loss chart
     this.drawLossChart();

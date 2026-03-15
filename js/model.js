@@ -7,10 +7,10 @@
 
 class MiniLM {
   constructor(config = {}) {
-    this.blockSize = config.blockSize || 6;
-    this.embedDim = config.embedDim || 12;
-    this.hiddenSize = config.hiddenSize || 100;
-    this.learningRate = config.learningRate || 0.05;
+    this.blockSize = config.blockSize || 8;
+    this.embedDim = config.embedDim || 16;
+    this.hiddenSize = config.hiddenSize || 128;
+    this.learningRate = config.learningRate || 0.01;
     this.batchSize = config.batchSize || 64;
 
     this.vocab = null;
@@ -124,9 +124,13 @@ class MiniLM {
   // --- Training step ---
 
   trainStep() {
-    const { X, Y, blockSize, embedDim, hiddenSize, vocabSize, learningRate } = this;
+    const { X, Y, blockSize, embedDim, hiddenSize, vocabSize } = this;
     const flatSize = blockSize * embedDim;
     const B = Math.min(this.batchSize, X.length);
+
+    // Learning rate decay: halve every 2000 steps, floor at 0.001
+    const decays = Math.floor(this.step / 2000);
+    const effectiveLR = Math.max(this.learningRate * Math.pow(0.5, decays), 0.001);
 
     // Sample mini-batch
     const idx = new Int32Array(B);
@@ -273,24 +277,59 @@ class MiniLM {
       }
     }
 
+    // ---- GRADIENT CLIPPING ----
+    const maxNorm = 5.0;
+    let gradNorm = 0;
+    for (let i = 0; i < vocabSize; i++)
+      for (let j = 0; j < embedDim; j++)
+        gradNorm += dC[i][j] * dC[i][j];
+    for (let i = 0; i < flatSize; i++)
+      for (let j = 0; j < hiddenSize; j++)
+        gradNorm += dW1[i][j] * dW1[i][j];
+    for (let j = 0; j < hiddenSize; j++)
+      gradNorm += db1[j] * db1[j];
+    for (let i = 0; i < hiddenSize; i++)
+      for (let j = 0; j < vocabSize; j++)
+        gradNorm += dW2[i][j] * dW2[i][j];
+    for (let j = 0; j < vocabSize; j++)
+      gradNorm += db2[j] * db2[j];
+    gradNorm = Math.sqrt(gradNorm);
+
+    if (gradNorm > maxNorm) {
+      const scale = maxNorm / gradNorm;
+      for (let i = 0; i < vocabSize; i++)
+        for (let j = 0; j < embedDim; j++)
+          dC[i][j] *= scale;
+      for (let i = 0; i < flatSize; i++)
+        for (let j = 0; j < hiddenSize; j++)
+          dW1[i][j] *= scale;
+      for (let j = 0; j < hiddenSize; j++)
+        db1[j] *= scale;
+      for (let i = 0; i < hiddenSize; i++)
+        for (let j = 0; j < vocabSize; j++)
+          dW2[i][j] *= scale;
+      for (let j = 0; j < vocabSize; j++)
+        db2[j] *= scale;
+    }
+
     // ---- SGD UPDATE ----
     for (let i = 0; i < vocabSize; i++)
       for (let j = 0; j < embedDim; j++)
-        this.C[i][j] -= learningRate * dC[i][j];
+        this.C[i][j] -= effectiveLR * dC[i][j];
 
     for (let i = 0; i < flatSize; i++)
       for (let j = 0; j < hiddenSize; j++)
-        this.W1[i][j] -= learningRate * dW1[i][j];
+        this.W1[i][j] -= effectiveLR * dW1[i][j];
 
     for (let j = 0; j < hiddenSize; j++)
-      this.b1[j] -= learningRate * db1[j];
+      this.b1[j] -= effectiveLR * db1[j];
 
     for (let i = 0; i < hiddenSize; i++)
       for (let j = 0; j < vocabSize; j++)
-        this.W2[i][j] -= learningRate * dW2[i][j];
+        this.W2[i][j] -= effectiveLR * dW2[i][j];
 
     for (let j = 0; j < vocabSize; j++)
-      this.b2[j] -= learningRate * db2[j];
+      this.b2[j] -= effectiveLR * db2[j];
 
     this.step++;
     this.losses.push(loss);
@@ -305,6 +344,7 @@ class MiniLM {
     return {
       loss,
       step: this.step,
+      effectiveLR,
       avgLoss: this.losses.length > 50
         ? this.losses.slice(-50).reduce((a, b) => a + b, 0) / 50
         : this.losses.reduce((a, b) => a + b, 0) / this.losses.length,
