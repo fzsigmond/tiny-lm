@@ -73,13 +73,31 @@ class MiniLM {
     this.b2 = MiniLM.zeros1D(vocabSize);
   }
 
-  prepareData(text) {
-    // Train BPE tokenizer on the text
+  // Step 2: Train BPE tokenizer and encode text (no weights or X/Y yet)
+  tokenize(text, maxVocabSize) {
     this.tokenizer = new BPETokenizer();
-    const tokenIds = this.tokenizer.train(text, this.maxVocabSize);
+    this.rawTokenIds = this.tokenizer.train(text, maxVocabSize || this.maxVocabSize);
     this.vocabSize = this.tokenizer.vocabSize;
 
-    // Init neural network parameters
+    return {
+      vocabSize: this.vocabSize,
+      numMerges: this.tokenizer.merges.length,
+      compressionRatio: (text.length / this.rawTokenIds.length).toFixed(1),
+    };
+  }
+
+  // Step 3: Build X/Y training pairs and init weights (uses current blockSize/embedDim)
+  buildTrainingData() {
+    if (!this.rawTokenIds) return false;
+
+    // Pad with blockSize BOS tokens so the model sees every BOS-padding pattern
+    const tokenIds = [
+      ...new Array(this.blockSize).fill(this.tokenizer.BOS_ID),
+      ...this.rawTokenIds,
+      this.tokenizer.EOS_ID,
+    ];
+
+    // Init neural network parameters with current embedDim
     this.initParams();
 
     // Create training examples from token sequence
@@ -95,6 +113,9 @@ class MiniLM {
       Y.push(tokenIds[i + this.blockSize]);
     }
 
+    // Guard against zero training examples
+    if (X.length === 0) return false;
+
     // Shuffle
     for (let i = X.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -108,12 +129,7 @@ class MiniLM {
     this.losses = [];
     this.trained = false;
 
-    return {
-      vocabSize: this.vocabSize,
-      numExamples: X.length,
-      numMerges: this.tokenizer.merges.length,
-      compressionRatio: (text.length / tokenIds.length).toFixed(1),
-    };
+    return { numExamples: X.length };
   }
 
   // --- Training step ---
@@ -331,7 +347,7 @@ class MiniLM {
 
     // Return info for visualization
     const topProbs = [];
-    for (let j = 0; j < vocabSize; j++) {
+    for (let j = this.tokenizer.NUM_SPECIAL; j < vocabSize; j++) {
       topProbs.push({ token: this.tokenizer.vocab[j], prob: probs[0][j] });
     }
     topProbs.sort((a, b) => b.prob - a.prob);
@@ -368,7 +384,7 @@ class MiniLM {
       }
     } else {
       const pad = blockSize - seedTokens.length;
-      for (let i = 0; i < pad; i++) context[i] = 0;
+      for (let i = 0; i < pad; i++) context[i] = this.tokenizer.BOS_ID;
       for (let i = 0; i < seedTokens.length; i++) {
         context[pad + i] = seedTokens[i];
       }
@@ -405,6 +421,11 @@ class MiniLM {
         }
         logits[j] = sum;
       }
+
+      // Suppress special tokens (allow EOS for early stopping)
+      logits[this.tokenizer.PAD_ID] = -Infinity;
+      logits[this.tokenizer.BOS_ID] = -Infinity;
+      logits[this.tokenizer.UNK_ID] = -Infinity;
 
       // Repetition penalty (before temperature scaling)
       if (repetitionPenalty !== 1.0) {
@@ -473,13 +494,16 @@ class MiniLM {
         if (r <= 0) { nextIdx = j; break; }
       }
 
+      // Stop on EOS
+      if (nextIdx === this.tokenizer.EOS_ID) break;
+
       const nextToken = this.tokenizer.vocab[nextIdx];
       result += nextToken;
       seenTokens.add(nextIdx);
 
       // Top predictions for visualization
       const topProbs = [];
-      for (let j = 0; j < vocabSize; j++) {
+      for (let j = this.tokenizer.NUM_SPECIAL; j < vocabSize; j++) {
         topProbs.push({ token: this.tokenizer.vocab[j], prob: probs[j] });
       }
       topProbs.sort((a, b) => b.prob - a.prob);

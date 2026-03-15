@@ -273,11 +273,10 @@
 
           <div class="controls-row">
             <div class="control-group">
-              <label>Vocab Size</label>
+              <label>Vocab Size <span class="label-unit">tokens</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-vocab" min="50" max="300" step="10" value="150">
                 <span class="slider-val" id="val-vocab">150</span>
-                <span style="font-size:11px; color:var(--text-muted)">tokens</span>
               </div>
             </div>
           </div>
@@ -312,6 +311,20 @@
         <div class="lab-step-content">
           <div class="controls-row">
             <div class="control-group">
+              <label>Embed Dims</label>
+              <div class="slider-row">
+                <input type="range" id="slider-embed" min="8" max="64" step="4" value="24">
+                <span class="slider-val" id="val-embed">24</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Context Window <span class="label-unit">tokens</span></label>
+              <div class="slider-row">
+                <input type="range" id="slider-context" min="3" max="16" step="1" value="8">
+                <span class="slider-val" id="val-context">8</span>
+              </div>
+            </div>
+            <div class="control-group">
               <label>Learning Rate</label>
               <div class="slider-row">
                 <input type="range" id="slider-lr" min="0.001" max="0.1" step="0.001" value="0.05">
@@ -319,11 +332,10 @@
               </div>
             </div>
             <div class="control-group">
-              <label>Training Speed</label>
+              <label>Training Speed <span class="label-unit">steps/frame</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-speed" min="1" max="50" step="1" value="10">
                 <span class="slider-val" id="val-speed">10</span>
-                <span style="font-size:11px; color:var(--text-muted)">steps/frame</span>
               </div>
             </div>
           </div>
@@ -396,28 +408,28 @@
               </div>
             </div>
             <div class="control-group">
-              <label>Top-K <span style="font-weight:400; color:var(--text-muted)">(0 = off)</span></label>
+              <label>Top-K <span class="label-unit">(0 = off)</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-topk" min="0" max="50" step="1" value="5">
                 <span class="slider-val" id="val-topk">5</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Top-P <span style="font-weight:400; color:var(--text-muted)">(1.0 = off)</span></label>
+              <label>Top-P <span class="label-unit">(1.0 = off)</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-topp" min="0" max="1.0" step="0.05" value="0.5">
                 <span class="slider-val" id="val-topp">0.50</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Rep. Penalty <span style="font-weight:400; color:var(--text-muted)">(1.0 = off)</span></label>
+              <label>Rep. Penalty <span class="label-unit">(1.0 = off)</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-reppen" min="1.0" max="2.0" step="0.05" value="1.5">
                 <span class="slider-val" id="val-reppen">1.50</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Length <span style="font-weight:400; color:var(--text-muted)">tokens</span></label>
+              <label>Length <span class="label-unit">tokens</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-length" min="10" max="200" step="5" value="80">
                 <span class="slider-val" id="val-length">80</span>

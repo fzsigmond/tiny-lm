@@ -103,6 +103,14 @@ const app = {
     document.getElementById('btn-generate').addEventListener('click', () => this.generateText());
 
     // Sliders
+    document.getElementById('slider-embed').addEventListener('input', (e) => {
+      document.getElementById('val-embed').textContent = e.target.value;
+      this.updateTrainingPreview();
+    });
+    document.getElementById('slider-context').addEventListener('input', (e) => {
+      document.getElementById('val-context').textContent = e.target.value;
+      this.updateTrainingPreview();
+    });
     document.getElementById('slider-lr').addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
       document.getElementById('val-lr').textContent = val.toFixed(3);
@@ -252,6 +260,8 @@ const app = {
     this.currentStep = step;
     this.updateStepStates();
 
+    if (step === 3) this.updateTrainingPreview();
+
     // Scroll to the active step
     const stepEl = document.getElementById(`step-${step}`);
     if (stepEl) stepEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -327,9 +337,8 @@ const app = {
     // Re-initialize model to allow re-tokenization with new vocab size
     this.model = new MiniLM();
     const vocabSize = parseInt(document.getElementById('slider-vocab').value);
-    this.model.maxVocabSize = vocabSize;
-    const info = this.model.prepareData(text);
-    this.showModelInfo(info);
+    const info = this.model.tokenize(text, vocabSize);
+    this.showTokenInfo(info);
     this.showTokenizationViz(text);
 
     // Allow re-tokenizing, show Next
@@ -346,8 +355,17 @@ const app = {
     }
 
     if (!this.model.trained && this.model.step === 0) {
-      const lr = parseFloat(document.getElementById('slider-lr').value);
-      this.model.learningRate = lr;
+      this.model.embedDim = parseInt(document.getElementById('slider-embed').value);
+      this.model.blockSize = parseInt(document.getElementById('slider-context').value);
+      this.model.learningRate = parseFloat(document.getElementById('slider-lr').value);
+      const result = this.model.buildTrainingData();
+      if (!result) {
+        alert('Text is too short to create training examples. Please provide more text.');
+        return;
+      }
+      this.showTrainingInfo(result);
+      document.getElementById('slider-embed').disabled = true;
+      document.getElementById('slider-context').disabled = true;
     }
 
     this.training = true;
@@ -389,11 +407,8 @@ const app = {
 
   resetModel() {
     this.stopTraining();
-    this.model.initParams();
-    this.model.step = 0;
-    this.model.losses = [];
-    this.model.trained = false;
 
+    // Clear training viz
     document.getElementById('training-viz').classList.remove('active');
     document.getElementById('btn-train').innerHTML = '<span class="btn-icon">&#9654;</span> Train Model';
     document.getElementById('btn-train').style.display = 'inline-flex';
@@ -409,10 +424,29 @@ const app = {
     document.getElementById('loss-value').textContent = 'Loss: —';
     document.getElementById('generation-output').innerHTML = '';
     document.getElementById('generation-steps-viz').innerHTML = '';
+
+    // Re-enable architecture sliders
+    document.getElementById('slider-embed').disabled = false;
+    document.getElementById('slider-context').disabled = false;
+
+    // Re-init weights (buildTrainingData will be called again on next Train click)
+    this.model.X = null;
+    this.model.Y = null;
+    this.model.step = 0;
+    this.model.losses = [];
+    this.model.trained = false;
+
+    // Clear training info from model-info (keep token info)
+    const tokenInfo = {
+      vocabSize: this.model.vocabSize,
+      numMerges: this.model.tokenizer ? this.model.tokenizer.merges.length : 0,
+      compressionRatio: this.model.rawTokenIds ? (document.getElementById('training-text').value.length / this.model.rawTokenIds.length).toFixed(1) : '—',
+    };
+    this.showTokenInfo(tokenInfo);
+    this.updateTrainingPreview();
   },
 
-  showModelInfo(info) {
-    const paramCount = this.model.getParamCount();
+  showTokenInfo(info) {
     document.getElementById('model-info').innerHTML = `
       <div class="info-grid">
         <div class="info-item">
@@ -423,9 +457,39 @@ const app = {
           <div class="info-label">Compression</div>
           <div class="info-value">${info.compressionRatio}x</div>
         </div>
+      </div>
+    `;
+  },
+
+  updateTrainingPreview() {
+    if (!this.model || !this.model.rawTokenIds) return;
+    const embedDim = parseInt(document.getElementById('slider-embed').value);
+    const blockSize = parseInt(document.getElementById('slider-context').value);
+    const vocabSize = this.model.vocabSize;
+    const hiddenSize = this.model.hiddenSize;
+    const flatSize = blockSize * embedDim;
+    const numExamples = this.model.rawTokenIds.length + 1;
+    const paramCount = vocabSize * embedDim + flatSize * hiddenSize + hiddenSize + hiddenSize * vocabSize + vocabSize;
+    this.renderTrainingStats(numExamples, paramCount);
+  },
+
+  showTrainingInfo(info) {
+    const paramCount = this.model.getParamCount();
+    this.renderTrainingStats(info.numExamples, paramCount);
+  },
+
+  renderTrainingStats(numExamples, paramCount) {
+    // Remove existing training stats if present
+    const existing = document.getElementById('training-stats');
+    if (existing) existing.remove();
+    const el = document.getElementById('model-info');
+    const div = document.createElement('div');
+    div.id = 'training-stats';
+    div.innerHTML = `
+      <div class="info-grid" style="margin-top:8px;">
         <div class="info-item">
           <div class="info-label">Training examples</div>
-          <div class="info-value">${info.numExamples.toLocaleString()}</div>
+          <div class="info-value">${numExamples.toLocaleString()}</div>
         </div>
         <div class="info-item">
           <div class="info-label">Parameters</div>
@@ -433,6 +497,7 @@ const app = {
         </div>
       </div>
     `;
+    el.appendChild(div);
   },
 
   showTokenizationViz(text) {

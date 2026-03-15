@@ -11,21 +11,35 @@ class BPETokenizer {
     this.merges = [];       // ordered merge rules: [{a, b, newId}, ...]
     this.vocabSize = 0;
     this.tokenFreqs = {};   // id → frequency count (for visualization)
+
+    // Special token IDs (reserved at the start of the vocab)
+    this.PAD_ID = 0;
+    this.BOS_ID = 1;
+    this.EOS_ID = 2;
+    this.UNK_ID = 3;
+    this.NUM_SPECIAL = 4;
   }
 
   // --- Train BPE on text, returns the final token ID sequence ---
   train(text, maxVocabSize = 150) {
-    // Step 1: Build base character vocabulary
+    // Step 1: Reserve special tokens, then build base character vocabulary
     const chars = [...new Set(text)].sort();
     this.vocab = {};
     this.tokenToId = {};
 
-    chars.forEach((ch, i) => {
-      this.vocab[i] = ch;
-      this.tokenToId[ch] = i;
+    const specialTokens = ['<PAD>', '<BOS>', '<EOS>', '<UNK>'];
+    specialTokens.forEach((tok, i) => {
+      this.vocab[i] = tok;
+      this.tokenToId[tok] = i;
     });
 
-    let nextId = chars.length;
+    chars.forEach((ch, i) => {
+      const id = i + this.NUM_SPECIAL;
+      this.vocab[id] = ch;
+      this.tokenToId[ch] = id;
+    });
+
+    let nextId = chars.length + this.NUM_SPECIAL;
 
     // Step 2: Convert text to character-level token IDs
     let tokens = [];
@@ -106,10 +120,7 @@ class BPETokenizer {
     let tokens = [];
     for (let i = 0; i < text.length; i++) {
       const id = this.tokenToId[text[i]];
-      if (id !== undefined) {
-        tokens.push(id);
-      }
-      // Skip unknown characters
+      tokens.push(id !== undefined ? id : this.UNK_ID);
     }
 
     // Replay merges in order
@@ -124,6 +135,7 @@ class BPETokenizer {
   decode(ids) {
     let result = '';
     for (const id of ids) {
+      if (id < this.NUM_SPECIAL) continue;
       if (this.vocab[id] !== undefined) {
         result += this.vocab[id];
       }
@@ -134,7 +146,7 @@ class BPETokenizer {
   // --- Get vocab entries sorted by frequency (for visualization) ---
   getTopTokens(n = 60) {
     const entries = [];
-    for (let id = 0; id < this.vocabSize; id++) {
+    for (let id = this.NUM_SPECIAL; id < this.vocabSize; id++) {
       entries.push({
         id,
         token: this.vocab[id],
