@@ -1,6 +1,7 @@
 // ============================================================
-// Mini Language Model — Character-level Neural Network
+// Mini Language Model — Sub-word Neural Network
 // Architecture: Embedding → Concat → Linear → Tanh → Linear → Softmax
+// Uses BPE tokenization for sub-word prediction.
 // This is a Bengio-style neural language model (2003),
 // the foundation that modern LLMs like GPT build upon.
 // ============================================================
@@ -8,14 +9,13 @@
 class MiniLM {
   constructor(config = {}) {
     this.blockSize = config.blockSize || 8;
-    this.embedDim = config.embedDim || 16;
+    this.embedDim = config.embedDim || 24;
     this.hiddenSize = config.hiddenSize || 128;
-    this.learningRate = config.learningRate || 0.01;
-    this.batchSize = config.batchSize || 64;
+    this.learningRate = config.learningRate || 0.05;
+    this.batchSize = config.batchSize || 32;
+    this.maxVocabSize = config.maxVocabSize || 150;
 
-    this.vocab = null;
-    this.charToIdx = {};
-    this.idxToChar = {};
+    this.tokenizer = null;
     this.vocabSize = 0;
 
     // Parameters
@@ -62,18 +62,6 @@ class MiniLM {
 
   // --- Data preparation ---
 
-  buildVocab(text) {
-    const chars = [...new Set(text)].sort();
-    this.vocab = chars;
-    this.vocabSize = chars.length;
-    this.charToIdx = {};
-    this.idxToChar = {};
-    chars.forEach((ch, i) => {
-      this.charToIdx[ch] = i;
-      this.idxToChar[i] = ch;
-    });
-  }
-
   initParams() {
     const { vocabSize, embedDim, blockSize, hiddenSize } = this;
     const flatSize = blockSize * embedDim;
@@ -86,19 +74,25 @@ class MiniLM {
   }
 
   prepareData(text) {
-    this.buildVocab(text);
+    // Train BPE tokenizer on the text
+    this.tokenizer = new BPETokenizer();
+    const tokenIds = this.tokenizer.train(text, this.maxVocabSize);
+    this.vocabSize = this.tokenizer.vocabSize;
+
+    // Init neural network parameters
     this.initParams();
 
+    // Create training examples from token sequence
     const X = [];
     const Y = [];
 
-    for (let i = 0; i <= text.length - this.blockSize - 1; i++) {
+    for (let i = 0; i <= tokenIds.length - this.blockSize - 1; i++) {
       const ctx = new Int32Array(this.blockSize);
       for (let j = 0; j < this.blockSize; j++) {
-        ctx[j] = this.charToIdx[text[i + j]];
+        ctx[j] = tokenIds[i + j];
       }
       X.push(ctx);
-      Y.push(this.charToIdx[text[i + this.blockSize]]);
+      Y.push(tokenIds[i + this.blockSize]);
     }
 
     // Shuffle
@@ -116,8 +110,9 @@ class MiniLM {
 
     return {
       vocabSize: this.vocabSize,
-      vocab: this.vocab,
       numExamples: X.length,
+      numMerges: this.tokenizer.merges.length,
+      compressionRatio: (text.length / tokenIds.length).toFixed(1),
     };
   }
 
@@ -129,7 +124,7 @@ class MiniLM {
     const B = Math.min(this.batchSize, X.length);
 
     // Learning rate decay: halve every 2000 steps, floor at 0.001
-    const decays = Math.floor(this.step / 2000);
+    const decays = Math.floor(this.step / 3000);
     const effectiveLR = Math.max(this.learningRate * Math.pow(0.5, decays), 0.001);
 
     // Sample mini-batch
@@ -337,7 +332,7 @@ class MiniLM {
     // Return info for visualization
     const topProbs = [];
     for (let j = 0; j < vocabSize; j++) {
-      topProbs.push({ char: this.idxToChar[j], prob: probs[0][j] });
+      topProbs.push({ token: this.tokenizer.vocab[j], prob: probs[0][j] });
     }
     topProbs.sort((a, b) => b.prob - a.prob);
 
@@ -349,33 +344,39 @@ class MiniLM {
         ? this.losses.slice(-50).reduce((a, b) => a + b, 0) / 50
         : this.losses.reduce((a, b) => a + b, 0) / this.losses.length,
       topPredictions: topProbs.slice(0, 10),
-      targetChar: this.idxToChar[Y[idx[0]]],
-      contextChars: Array.from(X[idx[0]]).map(i => this.idxToChar[i]).join(''),
+      targetToken: this.tokenizer.vocab[Y[idx[0]]],
+      contextTokens: Array.from(X[idx[0]]).map(i => this.tokenizer.vocab[i]),
     };
   }
 
   // --- Text generation ---
 
-  generate(seed, length, temperature = 0.8) {
-    if (!this.C) return { text: seed, steps: [] };
+  generate(seed, length, temperature = 0.8, topK = 0, topP = 0, repetitionPenalty = 1.0) {
+    if (!this.C || !this.tokenizer) return { text: seed, steps: [] };
 
     const { blockSize, embedDim, hiddenSize, vocabSize } = this;
     const flatSize = blockSize * embedDim;
 
-    // Build initial context from seed
+    // Tokenize the seed
+    let seedTokens = seed ? this.tokenizer.encode(seed) : [];
+
+    // Build context: pad or trim to blockSize
     let context = new Int32Array(blockSize);
-    const safeSeed = seed || this.idxToChar[0].repeat(blockSize);
-    for (let i = 0; i < blockSize; i++) {
-      const seedIdx = safeSeed.length - blockSize + i;
-      if (seedIdx >= 0 && seedIdx < safeSeed.length && this.charToIdx[safeSeed[seedIdx]] !== undefined) {
-        context[i] = this.charToIdx[safeSeed[seedIdx]];
-      } else {
-        context[i] = 0;
+    if (seedTokens.length >= blockSize) {
+      for (let i = 0; i < blockSize; i++) {
+        context[i] = seedTokens[seedTokens.length - blockSize + i];
+      }
+    } else {
+      const pad = blockSize - seedTokens.length;
+      for (let i = 0; i < pad; i++) context[i] = 0;
+      for (let i = 0; i < seedTokens.length; i++) {
+        context[pad + i] = seedTokens[i];
       }
     }
 
     let result = seed;
     const steps = [];
+    const seenTokens = new Set();
 
     for (let n = 0; n < length; n++) {
       // Forward pass (single example)
@@ -402,7 +403,34 @@ class MiniLM {
         for (let k = 0; k < hiddenSize; k++) {
           sum += h[k] * this.W2[k][j];
         }
-        logits[j] = sum / temperature;
+        logits[j] = sum;
+      }
+
+      // Repetition penalty (before temperature scaling)
+      if (repetitionPenalty !== 1.0) {
+        for (const prevIdx of seenTokens) {
+          if (logits[prevIdx] > 0) {
+            logits[prevIdx] /= repetitionPenalty;
+          } else {
+            logits[prevIdx] *= repetitionPenalty;
+          }
+        }
+      }
+
+      // Temperature scaling
+      for (let j = 0; j < vocabSize; j++) {
+        logits[j] /= temperature;
+      }
+
+      // Top-K filtering: set logits outside top K to -Infinity
+      if (topK > 0 && topK < vocabSize) {
+        const indexed = [];
+        for (let j = 0; j < vocabSize; j++) indexed.push({ j, v: logits[j] });
+        indexed.sort((a, b) => b.v - a.v);
+        const cutoff = indexed[topK - 1].v;
+        for (let j = 0; j < vocabSize; j++) {
+          if (logits[j] < cutoff) logits[j] = -Infinity;
+        }
       }
 
       // Softmax
@@ -416,6 +444,27 @@ class MiniLM {
       }
       for (let j = 0; j < vocabSize; j++) probs[j] /= sumExp;
 
+      // Top-P (nucleus) filtering: zero out tokens beyond cumulative threshold
+      if (topP > 0 && topP < 1.0) {
+        const indexed = [];
+        for (let j = 0; j < vocabSize; j++) indexed.push({ j, p: probs[j] });
+        indexed.sort((a, b) => b.p - a.p);
+        let cumulative = 0;
+        let cutoffReached = false;
+        for (const item of indexed) {
+          if (cutoffReached) {
+            probs[item.j] = 0;
+          } else {
+            cumulative += item.p;
+            if (cumulative > topP) cutoffReached = true;
+          }
+        }
+        // Re-normalize
+        let pSum = 0;
+        for (let j = 0; j < vocabSize; j++) pSum += probs[j];
+        for (let j = 0; j < vocabSize; j++) probs[j] /= pSum;
+      }
+
       // Sample
       let r = Math.random();
       let nextIdx = vocabSize - 1;
@@ -424,20 +473,21 @@ class MiniLM {
         if (r <= 0) { nextIdx = j; break; }
       }
 
-      const nextChar = this.idxToChar[nextIdx];
-      result += nextChar;
+      const nextToken = this.tokenizer.vocab[nextIdx];
+      result += nextToken;
+      seenTokens.add(nextIdx);
 
       // Top predictions for visualization
       const topProbs = [];
       for (let j = 0; j < vocabSize; j++) {
-        topProbs.push({ char: this.idxToChar[j], prob: probs[j] });
+        topProbs.push({ token: this.tokenizer.vocab[j], prob: probs[j] });
       }
       topProbs.sort((a, b) => b.prob - a.prob);
 
       steps.push({
-        context: Array.from(context).map(i => this.idxToChar[i]).join(''),
+        contextTokens: Array.from(context).map(i => this.tokenizer.vocab[i]),
         topPredictions: topProbs.slice(0, 8),
-        selected: nextChar,
+        selected: nextToken,
         selectedProb: probs[nextIdx],
       });
 
@@ -451,17 +501,20 @@ class MiniLM {
     return { text: result, steps };
   }
 
-  // Get 2D embedding projection (first 2 principal components via simple method)
+  // Get 2D embedding projection for top tokens
   getEmbedding2D() {
-    if (!this.C) return [];
+    if (!this.C || !this.tokenizer) return [];
+    const topTokens = this.tokenizer.getTopTokens(60);
     const points = [];
-    // Use first two embedding dimensions (simple but effective for visualization)
-    for (let i = 0; i < this.vocabSize; i++) {
-      points.push({
-        char: this.idxToChar[i],
-        x: this.C[i][0],
-        y: this.C[i][1],
-      });
+    for (const t of topTokens) {
+      if (t.id < this.vocabSize) {
+        points.push({
+          token: t.token,
+          freq: t.freq,
+          x: this.C[t.id][0],
+          y: this.C[t.id][1],
+        });
+      }
     }
     return points;
   }

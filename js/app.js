@@ -55,6 +55,9 @@ const app = {
       btn.addEventListener('click', () => this.loadSample(btn.dataset.sample));
     });
 
+    // Tokenize button
+    document.getElementById('btn-tokenize').addEventListener('click', () => this.tokenizeText());
+
     // Train button
     document.getElementById('btn-train').addEventListener('click', () => this.startTraining());
     document.getElementById('btn-stop').addEventListener('click', () => this.stopTraining());
@@ -77,6 +80,23 @@ const app = {
       this.stepsPerFrame = parseInt(e.target.value);
       document.getElementById('val-speed').textContent = e.target.value;
     });
+    document.getElementById('slider-vocab').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      document.getElementById('val-vocab').textContent = val;
+      if (this.model) this.model.maxVocabSize = val;
+    });
+    document.getElementById('slider-topk').addEventListener('input', (e) => {
+      document.getElementById('val-topk').textContent = e.target.value;
+    });
+    document.getElementById('slider-topp').addEventListener('input', (e) => {
+      document.getElementById('val-topp').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+    document.getElementById('slider-reppen').addEventListener('input', (e) => {
+      document.getElementById('val-reppen').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+    document.getElementById('slider-length').addEventListener('input', (e) => {
+      document.getElementById('val-length').textContent = e.target.value;
+    });
   },
 
   // --- Learn page interactive demos ---
@@ -86,22 +106,43 @@ const app = {
   },
 
   renderTokenizationDemo() {
-    const text = "Hello World";
     const container = document.getElementById('tokenization-demo');
     if (!container) return;
 
+    // Show BPE merge process on example text
+    const text = "the cat sat on the mat";
+    const charTokens = text.split('');
+
     let html = '<div class="demo-label">Input text:</div>';
     html += `<div class="demo-text-display">"${text}"</div>`;
-    html += '<div class="demo-arrow">Character Tokenization</div>';
+    html += '<div class="demo-arrow">Step 1: Split into characters</div>';
     html += '<div class="token-grid">';
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i] === ' ' ? '␣' : text[i];
-      html += `<div class="token-cell">
-        <span class="token-char">${ch}</span>
-        <span class="token-id">${i}</span>
-      </div>`;
+    for (const ch of charTokens) {
+      const display = ch === ' ' ? '␣' : ch;
+      html += `<div class="token-cell"><span class="token-char">${display}</span></div>`;
     }
     html += '</div>';
+
+    // Show merge steps
+    const mergeSteps = [
+      { pair: ['a', 't'], result: 'at', tokens: ['t', 'h', 'e', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 't', 'h', 'e', '␣', 'm', 'at'] },
+      { pair: ['t', 'h'], result: 'th', tokens: ['th', 'e', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 'th', 'e', '␣', 'm', 'at'] },
+      { pair: ['th', 'e'], result: 'the', tokens: ['the', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 'the', '␣', 'm', 'at'] },
+    ];
+
+    for (let s = 0; s < mergeSteps.length; s++) {
+      const step = mergeSteps[s];
+      html += `<div class="demo-arrow">Merge "${step.pair[0]}" + "${step.pair[1]}" → "${step.result}" (most frequent pair)</div>`;
+      html += '<div class="token-grid">';
+      for (const tok of step.tokens) {
+        const display = tok === '␣' ? '␣' : tok;
+        const isMerged = tok === step.result;
+        html += `<div class="token-cell ${isMerged ? 'token-merged' : ''}"><span class="token-char">${display}</span></div>`;
+      }
+      html += '</div>';
+    }
+
+    html += '<div class="merge-summary">22 characters → 15 tokens (1.5x compression)</div>';
     container.innerHTML = html;
   },
 
@@ -109,21 +150,22 @@ const app = {
     const container = document.getElementById('prediction-demo');
     if (!container) return;
 
-    const context = "The ca";
+    const contextTokens = ['the', ' ', 'ca'];
     const predictions = [
-      { char: 't', prob: 0.45 },
-      { char: 'r', prob: 0.25 },
-      { char: 'n', prob: 0.12 },
-      { char: 'b', prob: 0.08 },
-      { char: 'l', prob: 0.05 },
-      { char: 'p', prob: 0.03 },
-      { char: 's', prob: 0.02 },
+      { token: 't', prob: 0.42 },
+      { token: 'ts', prob: 0.18 },
+      { token: 'r', prob: 0.15 },
+      { token: 'n', prob: 0.10 },
+      { token: 'me', prob: 0.06 },
+      { token: 'b', prob: 0.05 },
+      { token: 'se', prob: 0.04 },
     ];
 
-    let html = '<div class="demo-label">Context window:</div>';
+    let html = '<div class="demo-label">Context tokens:</div>';
     html += '<div class="context-display">';
-    for (const ch of context) {
-      html += `<span class="ctx-char">${ch === ' ' ? '␣' : ch}</span>`;
+    for (const tok of contextTokens) {
+      const display = tok === ' ' ? '␣' : tok;
+      html += `<span class="ctx-char">${display}</span>`;
     }
     html += '<span class="ctx-char ctx-next">?</span>';
     html += '</div>';
@@ -131,8 +173,9 @@ const app = {
     html += '<div class="prob-bars">';
     for (const p of predictions) {
       const pct = (p.prob * 100).toFixed(1);
+      const display = p.token === ' ' ? '␣' : p.token;
       html += `<div class="prob-bar-row">
-        <span class="prob-char">"${p.char}"</span>
+        <span class="prob-char">"${display}"</span>
         <div class="prob-bar-track">
           <div class="prob-bar-fill" style="width:${pct}%"></div>
         </div>
@@ -151,114 +194,604 @@ const app = {
     const unique = new Set(text).size;
     const words = text.split(/\s+/).filter(w => w.length > 0).length;
     document.getElementById('text-stats').innerHTML =
-      `${chars.toLocaleString()} characters &middot; ${words.toLocaleString()} words &middot; ${unique} unique characters`;
+      `${chars.toLocaleString()} characters &middot; ${words.toLocaleString()} words &middot; ${unique} unique chars`;
   },
 
   loadSample(name) {
     const samples = {
-      shakespeare: `To be, or not to be, that is the question:
-Whether 'tis nobler in the mind to suffer
-The slings and arrows of outrageous fortune,
-Or to take arms against a sea of troubles,
-And by opposing end them. To die, to sleep,
-No more; and by a sleep to say we end
-The heart-ache and the thousand natural shocks
-That flesh is heir to: 'tis a consummation
-Devoutly to be wish'd. To die, to sleep;
-To sleep, perchance to dream—ay, there's the rub:
-For in that sleep of death what dreams may come,
-When we have shuffled off this mortal coil,
-Must give us pause—there's the respect
-That makes calamity of so long life.
-For who would bear the whips and scorns of time,
-The oppressor's wrong, the proud man's contumely,
-The pangs of despised love, the law's delay,
-The insolence of office, and the spurns
-That patient merit of the unworthy takes,
-When he himself might his quietus make
-With a bare bodkin? Who would fardels bear,
-To grunt and sweat under a weary life,
-But that the dread of something after death,
-The undiscovered country, from whose bourn
-No traveller returns, puzzles the will,
-And makes us rather bear those ills we have
-Than fly to others that we know not of?
-Thus conscience does make cowards of us all,
-And thus the native hue of resolution
-Is sicklied o'er with the pale cast of thought,
-And enterprises of great pith and moment,
-With this regard their currents turn awry
-And lose the name of action.`,
-      nursery: `Twinkle, twinkle, little star, how I wonder what you are!
-Up above the world so high, like a diamond in the sky.
-Twinkle, twinkle, little star, how I wonder what you are!
+      1: `hello world.
+hello there.
+hello friend.
+hi there.
+good morning.
+good evening.
+good night.
 
-Mary had a little lamb, its fleece was white as snow.
-And everywhere that Mary went, the lamb was sure to go.
-It followed her to school one day, that was against the rules.
-It made the children laugh and play, to see a lamb at school.
+the sun is warm.
+the moon is pale.
+the sky is blue.
+the grass is green.
+the rain is cold.
+the wind is soft.
+the fire is bright.
 
-Humpty Dumpty sat on a wall, Humpty Dumpty had a great fall.
-All the king's horses and all the king's men
-Couldn't put Humpty together again.
+a cat sits on the mat.
+a dog runs in the yard.
+a bird sings in the tree.
+a fish swims in the pond.
+a child reads a book.
+a baker makes bread.
+a farmer grows rice.
 
-Jack and Jill went up the hill to fetch a pail of water.
-Jack fell down and broke his crown, and Jill came tumbling after.
-Up Jack got and home did trot, as fast as he could caper.
-He went to bed to mend his head with vinegar and brown paper.
+the cat is small.
+the dog is happy.
+the bird is quick.
+the fish is quiet.
+the child is kind.
+the baker is busy.
+the farmer is strong.
 
-Hey diddle diddle, the cat and the fiddle,
-The cow jumped over the moon.
-The little dog laughed to see such sport,
-And the dish ran away with the spoon.
+i see the sun.
+i see the moon.
+i see the tree.
+i see the river.
+i see the road.
+i see the house.
+i see the light.
 
-Baa, baa, black sheep, have you any wool?
-Yes sir, yes sir, three bags full.
-One for the master, one for the dame,
-And one for the little boy who lives down the lane.`,
-      code: `function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-}
+you see the stars.
+you see the clouds.
+you see the field.
+you see the garden.
+you see the gate.
+you see the hill.
+you see the town.
 
-function factorial(n) {
-  if (n <= 1) return 1;
-  return n * factorial(n - 1);
-}
+we walk to the river.
+we walk to the market.
+we walk to the house.
+we walk to the garden.
+we walk in the morning.
+we walk in the evening.
+we walk together.
 
-function isPrime(n) {
-  if (n <= 1) return false;
-  if (n <= 3) return true;
-  if (n % 2 === 0) return false;
-  for (let i = 3; i * i <= n; i += 2) {
-    if (n % i === 0) return false;
-  }
-  return true;
-}
+they sit by the fire.
+they sit by the window.
+they sit near the door.
+they sit under the tree.
+they talk and laugh.
+they sing and smile.
+they rest and wait.
 
-function bubbleSort(arr) {
-  const n = arr.length;
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n - i - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-      }
-    }
-  }
-  return arr;
-}
+the red apple is sweet.
+the green apple is sour.
+the yellow lemon is sharp.
+the brown bread is warm.
+the white milk is fresh.
+the black tea is hot.
+the clear water is cool.
 
-function binarySearch(arr, target) {
-  let left = 0;
-  let right = arr.length - 1;
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    if (arr[mid] === target) return mid;
-    if (arr[mid] < target) left = mid + 1;
-    else right = mid - 1;
-  }
-  return -1;
-}`,
+one little stone.
+two little stones.
+three little stones.
+four little stones.
+five little stones.
+
+one small bird.
+two small birds.
+three small birds.
+four small birds.
+five small birds.
+
+monday comes after sunday.
+tuesday comes after monday.
+wednesday comes after tuesday.
+thursday comes after wednesday.
+friday comes after thursday.
+saturday comes after friday.
+sunday comes after saturday.
+
+spring brings flowers.
+summer brings heat.
+autumn brings wind.
+winter brings frost.
+
+the boy said, "hello."
+the girl said, "how are you?"
+the boy said, "i am fine."
+the girl said, "let us walk."
+they went down the road.
+they saw a little shop.
+they bought bread and tea.
+then they went home.
+
+in the morning, the town is quiet.
+at noon, the town is bright.
+in the evening, the town is calm.
+at night, the town is dark.
+
+a small lamp on a wooden desk.
+a closed book near the lamp.
+a thin pen beside the book.
+a cup of tea by the pen.
+a quiet room in the house.
+
+this is a simple story.
+this is a calm story.
+this is a short story.
+this is a clear story.
+the story has a start.
+the story has a middle.
+the story has an end.
+
+start:
+the child wakes up early.
+the child opens the door.
+the child walks outside.
+
+middle:
+the child sees the sky.
+the child hears a bird.
+the child finds a flower.
+
+end:
+the child smiles softly.
+the child walks back home.
+the child sleeps at night.
+
+question: where is the cat?
+answer: the cat is on the mat.
+
+question: where is the dog?
+answer: the dog is in the yard.
+
+question: what is in the cup?
+answer: tea is in the cup.
+
+question: who reads the book?
+answer: the child reads the book.
+
+yes.
+no.
+maybe.
+please.
+thank you.
+you are welcome.
+
+the river is long and slow.
+the road is long and straight.
+the hill is high and green.
+the lake is still and clear.
+the forest is deep and cool.
+
+some words are short.
+some words are long.
+some lines are short.
+some lines are long.
+every line has meaning.
+
+the model reads text.
+the model learns patterns.
+the model predicts words.
+the model predicts letters.
+the model improves with practice.
+
+hello world.
+good morning.
+the sun is warm.
+the cat is small.
+the child reads a book.
+we walk to the river.
+they sit by the fire.
+the story has an end.`,
+      2: `the day begins.
+the town wakes slowly.
+the street is quiet.
+the air is cool.
+the light is soft.
+
+a man opens a shop.
+a woman sweeps the floor.
+a child ties a shoe.
+a dog waits by the gate.
+a cat sleeps on a chair.
+
+the baker lights the oven.
+the teacher opens a book.
+the farmer walks to the field.
+the driver starts the bus.
+the cook boils water.
+
+bread is warm.
+milk is fresh.
+tea is hot.
+water is clear.
+fruit is sweet.
+
+the apple is red.
+the pear is green.
+the plum is dark.
+the peach is soft.
+the lemon is bright.
+
+one cup on the table.
+two cups on the table.
+three cups on the table.
+four cups on the table.
+five cups on the table.
+
+one plate on the shelf.
+two plates on the shelf.
+three plates on the shelf.
+four plates on the shelf.
+five plates on the shelf.
+
+the room is small.
+the room is neat.
+the room is clean.
+the room is bright.
+the room is still.
+
+a window faces the road.
+a lamp stands by the bed.
+a coat hangs by the door.
+a rug lies on the floor.
+a clock ticks on the wall.
+
+i open the window.
+i close the gate.
+i carry a basket.
+i wash my hands.
+i drink some water.
+i sit in the chair.
+i read a page.
+
+you open the book.
+you close the box.
+you carry a bag.
+you wash a cup.
+you drink hot tea.
+you sit by the fire.
+you read a story.
+
+we go to the market.
+we go to the river.
+we go to the station.
+we go to the garden.
+we go in the morning.
+we go in the rain.
+we go together.
+
+they come from the hill.
+they come from the town.
+they come from the farm.
+they come in silence.
+they come with smiles.
+they come with bread.
+they come to help.
+
+the market is busy.
+the market is loud.
+the market is full of color.
+the market is full of people.
+the market is full of sound.
+
+a woman sells apples.
+a man sells bread.
+a child sells flowers.
+a boy carries water.
+a girl counts coins.
+
+"good morning," said the baker.
+"good morning," said the farmer.
+"how is the day?" asked the teacher.
+"the day is fine," said the cook.
+"the bread is ready," said the baker.
+
+the bell rings once.
+the bell rings twice.
+the bell rings three times.
+people stop and listen.
+then people move again.
+
+at noon, the sun is high.
+at noon, the road is bright.
+at noon, the shops are full.
+at noon, the square is warm.
+at noon, the town is awake.
+
+after noon, the wind rises.
+after noon, the clouds gather.
+after noon, the leaves shake.
+after noon, the birds hide.
+after noon, the rain begins.
+
+rain falls on the roof.
+rain falls on the road.
+rain falls on the trees.
+rain falls on the fields.
+rain falls on the river.
+
+the dog runs inside.
+the cat hides under the chair.
+the child shuts the window.
+the mother folds the cloth.
+the father adds wood to the fire.
+
+inside the house, the room is calm.
+inside the house, the lamp is warm.
+inside the house, the soup smells good.
+inside the house, the chairs are dry.
+inside the house, the voices are low.
+
+the family eats together.
+the family talks softly.
+the family shares bread.
+the family drinks tea.
+the family laughs a little.
+
+after the rain, the sky clears.
+after the rain, the grass shines.
+after the rain, the road is dark.
+after the rain, the air is fresh.
+after the rain, the birds return.
+
+evening comes slowly.
+the shops begin to close.
+the market grows quiet.
+the lamps begin to glow.
+the town becomes calm.
+
+the teacher walks home.
+the farmer washes his boots.
+the baker counts the coins.
+the cook covers the pot.
+the child watches the stars.
+
+one star in the sky.
+two stars in the sky.
+three stars in the sky.
+four stars in the sky.
+five stars in the sky.
+
+night is cool.
+night is dark.
+night is gentle.
+night is quiet.
+night is deep.
+
+question: where is the cat?
+answer: the cat is under the chair.
+
+question: where is the baker?
+answer: the baker is in the shop.
+
+question: what falls on the roof?
+answer: rain falls on the roof.
+
+question: who reads a story?
+answer: you read a story.
+
+this is a simple town.
+this is a quiet town.
+this is a working town.
+this is a kind town.
+this is a small town with many voices.
+
+the day begins.
+the town wakes slowly.
+the street is quiet.
+the air is cool.
+the light is soft.`,
+      3: `there is a house by the lake.
+there is a path behind the house.
+there is a fence by the path.
+there is a tree by the fence.
+there is a bench under the tree.
+
+the lake is wide and still.
+the water is blue in the day.
+the water is silver at night.
+the water moves in the wind.
+the water reflects the moon.
+
+a boy lives in the house.
+a girl lives in the house.
+their mother lives in the house.
+their father lives in the house.
+an old dog lives there too.
+
+every morning, the boy wakes early.
+every morning, the girl opens the curtains.
+every morning, the mother makes tea.
+every morning, the father checks the boat.
+every morning, the dog waits by the door.
+
+the boat is old but strong.
+the rope is thick and dry.
+the wood is dark and smooth.
+the seat is narrow and hard.
+the oars are long and straight.
+
+the boy carries a small bag.
+the girl carries a blue hat.
+the father carries a net.
+the mother carries bread.
+the dog carries nothing.
+
+they walk down the path.
+they pass the tree.
+they pass the fence.
+they reach the shore.
+they step into the boat.
+
+the lake is calm in the morning.
+the mist is low on the water.
+the birds call from the reeds.
+the fish move below the surface.
+the boat drifts from the shore.
+
+the father rows slowly.
+the boy watches the water.
+the girl points at the sky.
+the mother smiles at the children.
+the dog sits very still.
+
+"look," said the girl.
+"i see a bird," said the boy.
+"i see two birds," said the mother.
+"the day will be clear," said the father.
+the dog gave no reply.
+
+one white bird above the lake.
+two white birds above the lake.
+three white birds above the lake.
+four white birds above the lake.
+five white birds above the lake.
+
+the sun climbs higher.
+the mist fades away.
+the water becomes bright.
+the boat casts a shadow.
+the shore grows small.
+
+near the middle of the lake, the father stops.
+near the middle of the lake, the boat turns.
+near the middle of the lake, the water is deep.
+near the middle of the lake, the fish are quick.
+near the middle of the lake, the air is cool.
+
+the father lowers the net.
+the boy leans to see.
+the girl holds the side.
+the mother opens the basket.
+the dog watches the net.
+
+sometimes the net is empty.
+sometimes the net is light.
+sometimes the net is heavy.
+sometimes the net shines with fish.
+sometimes the net brings only weeds.
+
+today the net is heavy.
+today the fish are many.
+today the father laughs.
+today the boy claps.
+today the girl sings.
+
+they place the fish in a box.
+they cover the box with cloth.
+they wipe the floor of the boat.
+they eat bread and cheese.
+they drink cool water.
+
+at noon, the lake is warm.
+at noon, the birds are quiet.
+at noon, the sky is pale.
+at noon, the boat rocks gently.
+at noon, the family rests.
+
+after noon, clouds gather in the west.
+after noon, the wind grows stronger.
+after noon, the water becomes rough.
+after noon, the father looks at the shore.
+after noon, the mother closes the basket.
+
+"it is time to go back," said the father.
+"the wind is changing," said the mother.
+"i hear the waves," said the boy.
+"i will hold the box," said the girl.
+the dog stood up at once.
+
+the father rows hard.
+the boat cuts through the water.
+the wind pushes from behind.
+the waves strike the side.
+the box slides a little.
+
+the boy holds the box.
+the girl holds the bench.
+the mother steadies the basket.
+the father keeps the boat straight.
+the dog stays close to the mother.
+
+soon they see the tree.
+soon they see the fence.
+soon they see the path.
+soon they see the shore.
+soon they reach the house again.
+
+rain begins as they land.
+rain taps on the boat.
+rain darkens the path.
+rain bends the grass.
+rain cools the air.
+
+they run into the house.
+they shut the door.
+they dry the net.
+they clean the fish.
+they hang wet coats by the fire.
+
+inside, the kitchen is warm.
+inside, the fire burns bright.
+inside, the kettle sings.
+inside, the windows shine with rain.
+inside, the table is ready.
+
+the mother cooks the fish.
+the father salts the soup.
+the boy sets the plates.
+the girl folds a cloth.
+the dog lies near the fire.
+
+the meal is simple.
+the meal is hot.
+the meal is good.
+the meal is shared.
+the meal ends with quiet smiles.
+
+later, the rain stops.
+later, the clouds break.
+later, the lake grows still again.
+later, the stars appear.
+later, the moon rises over the water.
+
+the boy stands at the window.
+the girl stands beside him.
+they look at the lake.
+they look at the moon.
+they look at the silent boat.
+
+"it was a good day," said the boy.
+"yes," said the girl.
+"the lake was kind," said the mother.
+"and the wind was strong," said the father.
+the dog closed its eyes.
+
+question: where is the house?
+answer: the house is by the lake.
+
+question: who rows the boat?
+answer: the father rows the boat.
+
+question: what is in the box?
+answer: fish are in the box.
+
+question: where does the dog lie?
+answer: the dog lies near the fire.
+
+this is a story about a lake.
+this is a story about a family.
+this is a story about work.
+this is a story about weather.
+this is a story about going out and coming home.
+
+there is a house by the lake.
+there is a path behind the house.
+there is a fence by the path.
+there is a tree by the fence.
+there is a bench under the tree.`,
     };
 
     const text = samples[name] || '';
@@ -266,20 +799,38 @@ function binarySearch(arr, target) {
     this.updateTextStats();
   },
 
-  // --- Training ---
+  // --- Tokenization ---
 
-  startTraining() {
+  tokenizeText() {
     const text = document.getElementById('training-text').value.trim();
     if (text.length < 20) {
       alert('Please enter at least 20 characters of training text.');
       return;
     }
 
+    const vocabSize = parseInt(document.getElementById('slider-vocab').value);
+    this.model.maxVocabSize = vocabSize;
+    const info = this.model.prepareData(text);
+    this.showModelInfo(info);
+    this.showTokenizationViz(text);
+
+    // Show train section, disable tokenize button
+    document.getElementById('train-section').style.display = 'block';
+    document.getElementById('btn-tokenize').disabled = true;
+    document.getElementById('btn-tokenize').textContent = 'Tokenized';
+  },
+
+  // --- Training ---
+
+  startTraining() {
+    if (!this.model.tokenizer) {
+      alert('Please tokenize the text first!');
+      return;
+    }
+
     if (!this.model.trained && this.model.step === 0) {
       const lr = parseFloat(document.getElementById('slider-lr').value);
       this.model.learningRate = lr;
-      const info = this.model.prepareData(text);
-      this.showModelInfo(info);
     }
 
     this.training = true;
@@ -319,8 +870,12 @@ function binarySearch(arr, target) {
     this.model = new MiniLM();
     document.getElementById('btn-train').innerHTML = '<span class="btn-icon">&#9654;</span> Train Model';
     document.getElementById('training-viz').classList.remove('active');
+    document.getElementById('tokenization-viz').style.display = 'none';
+    document.getElementById('train-section').style.display = 'none';
     document.getElementById('generation-section').style.display = 'none';
     document.getElementById('model-info').innerHTML = '';
+    document.getElementById('btn-tokenize').disabled = false;
+    document.getElementById('btn-tokenize').textContent = 'Tokenize';
 
     // Clear canvases
     ['loss-canvas', 'embedding-canvas'].forEach(id => {
@@ -340,7 +895,11 @@ function binarySearch(arr, target) {
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">Vocabulary</div>
-          <div class="info-value">${info.vocabSize} chars</div>
+          <div class="info-value">${info.vocabSize} tokens (${info.numMerges} merges)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Compression</div>
+          <div class="info-value">${info.compressionRatio}x</div>
         </div>
         <div class="info-item">
           <div class="info-label">Training examples</div>
@@ -350,28 +909,70 @@ function binarySearch(arr, target) {
           <div class="info-label">Parameters</div>
           <div class="info-value">${paramCount.toLocaleString()}</div>
         </div>
-        <div class="info-item">
-          <div class="info-label">Architecture</div>
-          <div class="info-value">Embed(${this.model.embedDim}) → Hidden(${this.model.hiddenSize}) → Softmax</div>
-        </div>
       </div>
     `;
+  },
+
+  showTokenizationViz(text) {
+    const tok = this.model.tokenizer;
+    if (!tok) return;
+
+    document.getElementById('tokenization-viz').style.display = 'block';
+
+    // Show top merge rules
+    const mergesContainer = document.getElementById('token-viz-merges');
+    const topMerges = tok.merges.slice(0, 20);
+    let mergesHtml = '<div class="merge-rules-grid">';
+    for (let i = 0; i < topMerges.length; i++) {
+      const m = topMerges[i];
+      const a = this.displayToken(tok.vocab[m.a]);
+      const b = this.displayToken(tok.vocab[m.b]);
+      const result = this.displayToken(tok.vocab[m.newId]);
+      mergesHtml += `<div class="merge-rule">
+        <span class="merge-num">#${i + 1}</span>
+        <span class="merge-pair">"${this.escapeHtml(a)}" + "${this.escapeHtml(b)}"</span>
+        <span class="merge-arrow-sm">→</span>
+        <span class="merge-result">"${this.escapeHtml(result)}"</span>
+      </div>`;
+    }
+    if (tok.merges.length > 20) {
+      mergesHtml += `<div class="merge-rule" style="color:var(--text-muted)">... and ${tok.merges.length - 20} more merges</div>`;
+    }
+    mergesHtml += '</div>';
+    mergesContainer.innerHTML = mergesHtml;
+
+    // Show tokenized text
+    const textContainer = document.getElementById('token-viz-text');
+    const tokenIds = tok.encode(text);
+    const displayIds = tokenIds.slice(0, 300);
+
+    let textHtml = '<div class="tokenized-text-display">';
+    for (let i = 0; i < displayIds.length; i++) {
+      const id = displayIds[i];
+      const token = tok.vocab[id];
+      const display = token
+        .replace(/ /g, '␣')
+        .replace(/\n/g, '↵')
+        .replace(/\t/g, '⇥');
+      const colorClass = token.length > 1 ? 'token-multi' : 'token-single';
+      textHtml += `<span class="token-pill ${colorClass}" title="ID: ${id}, token: &quot;${this.escapeHtml(token)}&quot;">${this.escapeHtml(display)}</span>`;
+    }
+    if (tokenIds.length > 300) {
+      textHtml += `<span class="token-pill" style="opacity:0.4">... ${tokenIds.length - 300} more</span>`;
+    }
+    textHtml += '</div>';
+    textContainer.innerHTML = textHtml;
   },
 
   // --- Visualization ---
 
   updateTrainingViz(result) {
-    // Step counter & loss
     document.getElementById('step-counter').textContent = `Step: ${result.step.toLocaleString()}`;
     document.getElementById('loss-value').textContent = `Loss: ${result.avgLoss.toFixed(4)} · LR: ${result.effectiveLR.toFixed(4)}`;
 
-    // Loss chart
     this.drawLossChart();
-
-    // Top predictions
     this.drawPredictions(result);
 
-    // Embedding viz (every 20 steps)
     if (result.step % 20 === 0) {
       this.drawEmbeddingViz();
     }
@@ -382,8 +983,7 @@ function binarySearch(arr, target) {
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const parent = canvas.parentElement;
-    // Use clientWidth to avoid feedback loop (excludes overflow)
-    const W = parent.clientWidth - 32; // account for panel padding
+    const W = parent.clientWidth - 32;
     const H = 200;
     canvas.width = W * dpr;
     canvas.height = H * dpr;
@@ -399,7 +999,6 @@ function binarySearch(arr, target) {
     const losses = this.model.losses;
     if (losses.length < 2) return;
 
-    // Downsample for performance
     const maxPoints = 500;
     let data = losses;
     if (losses.length > maxPoints) {
@@ -417,7 +1016,6 @@ function binarySearch(arr, target) {
     const minL = Math.min(...data) * 0.95;
     const maxL = Math.max(...data) * 1.05;
 
-    // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
@@ -428,7 +1026,6 @@ function binarySearch(arr, target) {
       ctx.stroke();
     }
 
-    // Axis labels
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '11px "IBM Plex Mono", monospace';
     ctx.textAlign = 'right';
@@ -440,7 +1037,6 @@ function binarySearch(arr, target) {
     ctx.textAlign = 'center';
     ctx.fillText('Training Steps', W / 2, H - 4);
 
-    // Loss line
     ctx.beginPath();
     ctx.strokeStyle = '#4f8ff7';
     ctx.lineWidth = 2;
@@ -453,7 +1049,6 @@ function binarySearch(arr, target) {
     }
     ctx.stroke();
 
-    // Gradient fill
     const gradient = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
     gradient.addColorStop(0, 'rgba(79, 143, 247, 0.15)');
     gradient.addColorStop(1, 'rgba(79, 143, 247, 0)');
@@ -466,14 +1061,16 @@ function binarySearch(arr, target) {
 
   drawPredictions(result) {
     const container = document.getElementById('live-predictions');
-    let html = `<div class="pred-context">Context: <span class="mono">"${this.escapeHtml(result.contextChars)}"</span> → Target: <span class="mono">"${this.escapeHtml(result.targetChar)}"</span></div>`;
+    const ctxDisplay = result.contextTokens.map(t => this.displayToken(t)).join(' | ');
+    const targetDisplay = this.displayToken(result.targetToken);
+    let html = `<div class="pred-context">Context: <span class="mono">${this.escapeHtml(ctxDisplay)}</span> → Target: <span class="mono">"${this.escapeHtml(targetDisplay)}"</span></div>`;
     html += '<div class="pred-bars">';
     for (const p of result.topPredictions.slice(0, 8)) {
       const pct = (p.prob * 100).toFixed(1);
-      const isTarget = p.char === result.targetChar;
-      const displayChar = p.char === ' ' ? '␣' : p.char === '\n' ? '↵' : p.char;
+      const isTarget = p.token === result.targetToken;
+      const display = this.displayToken(p.token);
       html += `<div class="pred-bar-row ${isTarget ? 'pred-correct' : ''}">
-        <span class="pred-char">${this.escapeHtml(displayChar)}</span>
+        <span class="pred-char">${this.escapeHtml(display)}</span>
         <div class="pred-bar-track">
           <div class="pred-bar-fill" style="width:${Math.min(pct, 100)}%"></div>
         </div>
@@ -504,7 +1101,6 @@ function binarySearch(arr, target) {
     const pad = 30;
     const plotSize = size - 2 * pad;
 
-    // Find bounds
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const p of points) {
       if (p.x < minX) minX = p.x;
@@ -515,32 +1111,43 @@ function binarySearch(arr, target) {
     const rangeX = maxX - minX || 1;
     const rangeY = maxY - minY || 1;
 
-    // Draw points
     for (const p of points) {
       const x = pad + ((p.x - minX) / rangeX) * plotSize;
       const y = pad + ((p.y - minY) / rangeY) * plotSize;
-      const displayChar = p.char === ' ' ? '␣' : p.char === '\n' ? '↵' : p.char;
+      const label = this.displayToken(p.token).slice(0, 5);
 
-      // Dot
       ctx.beginPath();
-      ctx.fillStyle = this.charColor(p.char);
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = this.tokenColor(p.token);
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
       ctx.fill();
 
-      // Label
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.font = '9px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(displayChar, x, y - 8);
+      ctx.fillText(label, x, y - 6);
     }
   },
 
-  charColor(ch) {
-    if (/[a-z]/.test(ch)) return '#4f8ff7';
-    if (/[A-Z]/.test(ch)) return '#7c5ff7';
-    if (/[0-9]/.test(ch)) return '#f7a84f';
-    if (/\s/.test(ch)) return '#4fc78f';
-    return '#f75f8a';
+  tokenColor(token) {
+    if (token.length === 1) {
+      if (/[a-z]/.test(token)) return '#4f8ff7';
+      if (/[A-Z]/.test(token)) return '#7c5ff7';
+      if (/[0-9]/.test(token)) return '#f7a84f';
+      if (/\s/.test(token)) return '#4fc78f';
+      return '#f75f8a';
+    }
+    // Multi-char tokens: color by length
+    if (token.length <= 2) return '#6ba3ff';
+    if (token.length <= 4) return '#a87cff';
+    return '#ffb366';
+  },
+
+  displayToken(token) {
+    if (!token) return '?';
+    return token
+      .replace(/ /g, '␣')
+      .replace(/\n/g, '↵')
+      .replace(/\t/g, '⇥');
   },
 
   // --- Generation ---
@@ -548,69 +1155,72 @@ function binarySearch(arr, target) {
   generateText() {
     const seed = document.getElementById('prompt-input').value || '';
     const temp = parseFloat(document.getElementById('slider-temp').value);
-    const length = 200;
+    const topK = parseInt(document.getElementById('slider-topk').value);
+    const topP = parseFloat(document.getElementById('slider-topp').value);
+    const repPen = parseFloat(document.getElementById('slider-reppen').value);
+    const length = parseInt(document.getElementById('slider-length').value);
 
     if (!this.model.C) {
       alert('Please train the model first!');
       return;
     }
 
-    const { text, steps } = this.model.generate(seed, length, temp);
+    const { text, steps } = this.model.generate(seed, length, temp, topK, topP, repPen);
 
-    // Display generated text with character-by-character animation
     const output = document.getElementById('generation-output');
     output.innerHTML = '';
 
-    // Show seed in different style
+    // Show seed
     const seedSpan = document.createElement('span');
     seedSpan.className = 'gen-seed';
     seedSpan.textContent = seed;
     output.appendChild(seedSpan);
 
-    const genChars = text.slice(seed.length);
-    let charIdx = 0;
+    // Animate token by token
+    let tokenIdx = 0;
 
-    const typeChar = () => {
-      if (charIdx >= genChars.length) return;
-      const span = document.createElement('span');
-      span.className = 'gen-char';
-      span.textContent = genChars[charIdx];
-      // Color by confidence
-      if (steps[charIdx]) {
-        const conf = steps[charIdx].selectedProb;
-        span.style.opacity = 0.4 + conf * 0.6;
-        span.title = `"${steps[charIdx].selected}" (${(conf * 100).toFixed(1)}% confidence)`;
+    const typeToken = () => {
+      if (tokenIdx >= steps.length) {
+        this.showGenerationSteps(steps);
+        return;
       }
+      const step = steps[tokenIdx];
+      const span = document.createElement('span');
+      span.className = 'gen-token';
+      span.textContent = step.selected;
+      span.style.opacity = 0.4 + step.selectedProb * 0.6;
+      span.title = `"${step.selected}" (${(step.selectedProb * 100).toFixed(1)}% confidence)`;
       output.appendChild(span);
-      charIdx++;
-      if (charIdx < genChars.length) {
-        setTimeout(typeChar, 20);
+      tokenIdx++;
+      if (tokenIdx < steps.length) {
+        setTimeout(typeToken, 40);
       } else {
         this.showGenerationSteps(steps);
       }
     };
-    typeChar();
+    typeToken();
   },
 
   showGenerationSteps(steps) {
     const container = document.getElementById('generation-steps-viz');
     if (steps.length === 0) return;
 
-    let html = '<h4>Generation Steps (click to explore)</h4>';
+    let html = '<h4>Generation Steps</h4>';
     html += '<div class="gen-steps-scroll">';
     for (let i = 0; i < Math.min(steps.length, 50); i++) {
       const s = steps[i];
+      const ctxDisplay = s.contextTokens.map(t => this.displayToken(t)).join('|');
       html += `<div class="gen-step" data-step="${i}">
         <div class="gen-step-num">#${i + 1}</div>
         <div class="gen-step-ctx">
-          <span class="mono">"${this.escapeHtml(s.context)}"</span> →
-          <span class="gen-step-selected">"${this.escapeHtml(s.selected)}"</span>
+          <span class="mono">${this.escapeHtml(ctxDisplay)}</span> →
+          <span class="gen-step-selected">"${this.escapeHtml(this.displayToken(s.selected))}"</span>
           <span class="gen-step-conf">(${(s.selectedProb * 100).toFixed(1)}%)</span>
         </div>
         <div class="gen-step-probs">
           ${s.topPredictions.slice(0, 5).map(p => {
-            const displayChar = p.char === ' ' ? '␣' : p.char === '\n' ? '↵' : p.char;
-            return `<span class="gen-prob-pill ${p.char === s.selected ? 'selected' : ''}">${this.escapeHtml(displayChar)} ${(p.prob * 100).toFixed(0)}%</span>`;
+            const display = this.displayToken(p.token);
+            return `<span class="gen-prob-pill ${p.token === s.selected ? 'selected' : ''}">${this.escapeHtml(display)} ${(p.prob * 100).toFixed(0)}%</span>`;
           }).join('')}
         </div>
       </div>`;

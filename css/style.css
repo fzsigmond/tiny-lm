@@ -40,6 +40,7 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ---- Layout ---- */
@@ -268,6 +269,116 @@ nav {
   margin-top: 4px;
 }
 
+.token-merged {
+  border-color: var(--green);
+  background: var(--green-glow);
+}
+
+.token-merged .token-char {
+  color: var(--green);
+}
+
+.merge-summary {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Tokenization viz (Lab page) */
+
+.merge-rules-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.merge-rule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+
+.merge-num {
+  color: var(--text-muted);
+  font-size: 10px;
+  min-width: 20px;
+}
+
+.merge-pair {
+  color: var(--text-secondary);
+}
+
+.merge-arrow-sm {
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.merge-result {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.tokenized-text-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  max-height: 260px;
+  overflow-y: auto;
+  line-height: 1.8;
+}
+
+.tokenized-text-display::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tokenized-text-display::-webkit-scrollbar-track {
+  background: var(--bg-input);
+  border-radius: 3px;
+}
+
+.tokenized-text-display::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.token-pill {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  cursor: default;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.token-pill:hover {
+  border-color: var(--accent);
+}
+
+.token-single {
+  background: rgba(79, 143, 247, 0.08);
+  color: var(--text-secondary);
+}
+
+.token-multi {
+  background: rgba(79, 199, 143, 0.1);
+  color: var(--green);
+  font-weight: 500;
+  border-color: rgba(79, 199, 143, 0.15);
+}
+
 /* Prediction demo */
 
 .context-display {
@@ -280,13 +391,14 @@ nav {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  min-width: 36px;
   height: 40px;
+  padding: 0 8px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -316,11 +428,14 @@ nav {
 
 .prob-char, .pred-char {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 14px;
-  width: 28px;
-  text-align: center;
+  font-size: 13px;
+  width: 60px;
+  text-align: right;
   color: var(--text-primary);
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .prob-bar-track, .pred-bar-track {
@@ -814,9 +929,10 @@ input[type="file"] {
   font-weight: 600;
 }
 
-.gen-char {
+.gen-char, .gen-token {
   color: var(--text-primary);
   transition: opacity 0.2s;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* Generation steps */
@@ -965,33 +1081,274 @@ input[type="file"] {
 
 /* ---- Responsive ---- */
 
-@media (max-width: 600px) {
-  .header-inner {
-    flex-direction: column;
-    gap: 12px;
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
   }
 
-  .hero h1 {
-    font-size: 26px;
+  .page {
+    padding: 24px 0 60px;
   }
 
-  .controls-row {
-    flex-direction: column;
+  .viz-grid {
+    grid-template-columns: 1fr;
   }
 
-  .gen-input-row {
-    flex-direction: column;
+  .concept-grid {
+    grid-template-columns: 1fr;
   }
 
   .info-grid {
     grid-template-columns: 1fr 1fr;
   }
 
+  .math-block {
+    font-size: 12px;
+    padding: 12px 14px;
+    line-height: 1.7;
+  }
+
+  .merge-rules-grid {
+    gap: 4px;
+  }
+
+  .merge-rule {
+    padding: 5px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .training-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-inner {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 0;
+  }
+
+  .hero {
+    margin-bottom: 36px;
+  }
+
+  .hero h1 {
+    font-size: 24px;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+
+  .concept-section {
+    margin-bottom: 36px;
+  }
+
+  .concept-section h2 {
+    font-size: 19px;
+  }
+
+  .concept-section > p {
+    font-size: 14px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  /* Controls */
+  .controls-row {
+    flex-direction: column;
+  }
+
+  .control-group input[type="range"] {
+    width: 100%;
+    min-width: 0;
+    height: 6px;
+  }
+
+  .control-group input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .control-group {
+    width: 100%;
+  }
+
+  .control-group .slider-row {
+    width: 100%;
+  }
+
+  /* Buttons — larger touch targets */
+  .btn {
+    padding: 12px 24px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+
+  .btn-row {
+    flex-wrap: wrap;
+  }
+
+  .sample-btn {
+    padding: 8px 14px;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .nav-tab {
+    padding: 8px 16px;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  /* Text input */
+  textarea#training-text {
+    min-height: 120px;
+    font-size: 14px;
+  }
+
+  /* Generation */
+  .gen-input-row {
+    flex-direction: column;
+  }
+
+  #prompt-input {
+    font-size: 16px; /* prevents iOS zoom on focus */
+  }
+
+  #generation-output {
+    font-size: 14px;
+    padding: 16px;
+  }
+
+  /* Diagrams */
   .architecture-diagram {
     flex-direction: column;
+    gap: 2px;
+    padding: 16px 0;
   }
 
   .arch-arrow {
     transform: rotate(90deg);
+  }
+
+  .arch-block {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  /* Token demo */
+  .demo-text-display {
+    font-size: 16px;
+    word-break: break-all;
+  }
+
+  .token-cell {
+    padding: 6px 8px;
+    min-width: 36px;
+  }
+
+  .token-char {
+    font-size: 14px;
+  }
+
+  /* Prediction demo */
+  .context-display {
+    flex-wrap: wrap;
+  }
+
+  .prob-char, .pred-char {
+    font-size: 12px;
+    width: 50px;
+  }
+
+  .prob-pct, .pred-pct {
+    font-size: 11px;
+    width: 40px;
+  }
+
+  /* Generation steps */
+  .gen-step {
+    padding: 8px 10px;
+  }
+
+  .gen-step-ctx {
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  .gen-prob-pill {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* Tokenization viz */
+  .tokenized-text-display {
+    padding: 12px;
+    max-height: 200px;
+  }
+
+  .token-pill {
+    font-size: 11px;
+    padding: 2px 4px;
+  }
+
+  /* Info grid */
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .info-item {
+    padding: 10px 12px;
+  }
+
+  .info-value {
+    font-size: 13px;
+  }
+
+  /* Lab section */
+  .lab-section h2 {
+    font-size: 17px;
+  }
+
+  #generation-section {
+    margin-top: 20px;
+  }
+}
+
+/* Ensure touch targets are at least 44px on touch devices */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+  }
+
+  .sample-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .nav-tab {
+    min-height: 44px;
+  }
+
+  .upload-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .control-group input[type="range"] {
+    height: 6px;
+  }
+
+  .control-group input[type="range"]::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
   }
 }

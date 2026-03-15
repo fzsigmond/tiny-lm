@@ -32,7 +32,7 @@
       <section class="concept-section">
         <h2><span class="step-num">1</span> What is a Language Model?</h2>
         <p>
-          A language model is a program that predicts the next word (or character) given what came before.
+          A language model is a program that predicts the next token given what came before.
           That's it. When you type "The cat sat on the" — a language model figures out that "mat" is more
           likely than "xylophone". By chaining these predictions together, it can generate whole paragraphs
           of coherent text.
@@ -41,7 +41,7 @@
           <div class="concept-card">
             <h3><span class="card-color" style="background:var(--accent)"></span>Core idea</h3>
             <p>Given a sequence of text, predict what comes next. Each prediction is a probability distribution
-              over all possible next characters.</p>
+              over all possible next tokens.</p>
           </div>
           <div class="concept-card">
             <h3><span class="card-color" style="background:var(--green)"></span>Why it works</h3>
@@ -60,16 +60,21 @@
       <section class="concept-section">
         <h2><span class="step-num">2</span> Tokenization</h2>
         <p>
-          Before a model can process text, it needs to convert characters into numbers. This is called
-          <strong>tokenization</strong>. Real LLMs use subword tokenizers (like BPE), but our tiny model
-          uses the simplest approach: each character becomes its own token.
+          Before a model can process text, it needs to break it into <strong>tokens</strong> — meaningful
+          pieces that each get a numeric ID. Our model uses <strong>Byte Pair Encoding (BPE)</strong>,
+          the same algorithm used by GPT and most modern LLMs. BPE starts with individual characters and
+          iteratively merges the most frequent adjacent pairs into new tokens like "the", "ing", or "at".
         </p>
         <div class="card" id="tokenization-demo"></div>
         <div class="math-block">
-          <span class="comment">// Each character maps to a unique integer</span><br>
-          'H' → 0, &nbsp; 'e' → 1, &nbsp; 'l' → 2, &nbsp; 'o' → 3, &nbsp; ' ' → 4, &nbsp; 'W' → 5, ...<br><br>
-          <span class="comment">// Vocabulary = set of all unique tokens</span><br>
-          vocab_size = number of unique characters in training text
+          <span class="comment">// BPE Algorithm:</span><br>
+          1. Start with individual characters as tokens<br>
+          2. Count all adjacent token pairs<br>
+          3. Merge the most frequent pair into a new token<br>
+          4. Repeat until vocab_size is reached<br><br>
+          <span class="comment">// Result: common patterns become single tokens</span><br>
+          "the" → [token_42], &nbsp; " and" → [token_87], &nbsp; "ing" → [token_63]<br>
+          vocab_size = base chars + number of merges (typically 100-300)
         </div>
       </section>
 
@@ -77,18 +82,49 @@
       <section class="concept-section">
         <h2><span class="step-num">3</span> Embeddings</h2>
         <p>
-          Raw token IDs (like 0, 1, 2) don't carry meaning. An <strong>embedding</strong> converts each
-          token into a vector of numbers that the neural network can work with. Characters with similar
-          roles (like vowels, or punctuation) end up with similar embeddings as the model trains.
+          After tokenization, each token is just a number — an ID like 0, 1, or 42. But a number alone
+          doesn't tell the model anything about what a token <em>means</em>. The model needs a richer
+          representation: a list of numbers (a <strong>vector</strong>) that captures a token's properties.
+          That's what an <strong>embedding</strong> is.
         </p>
+        <p style="color:var(--text-secondary); font-size:15px; max-width:720px; margin-bottom:20px;">
+          Think of it like coordinates. A city can be described by two numbers (latitude, longitude)
+          that tell you where it is relative to other cities. An embedding does the same thing for a token,
+          but in many more dimensions. Each dimension might loosely capture something like "how noun-like is
+          this?" or "does this appear at the start of sentences?" — though the model discovers these
+          dimensions on its own during training.
+        </p>
+
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--accent)"></span>The lookup table</h3>
+            <p>The model stores a big table (matrix) where each row is one token's embedding. To get
+              the embedding for token #42, it just looks up row 42. This table starts random and is
+              learned during training.</p>
+          </div>
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--green)"></span>Similar tokens cluster</h3>
+            <p>As the model trains, tokens that behave similarly — like "the" and "a", or "run" and
+              "walk" — end up with similar embeddings (nearby vectors). You can see this in the
+              embedding plot in the Lab.</p>
+          </div>
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--purple)"></span>Context window</h3>
+            <p>The model looks at several tokens at once (a "context window" of 8 tokens in our case).
+              It concatenates their embeddings into one long vector, giving the neural network a
+              complete picture of the recent context.</p>
+          </div>
+        </div>
+
         <div class="math-block">
-          <span class="comment">// Embedding table: each token gets a vector of numbers</span><br>
+          <span class="comment">// The embedding table: one row per token, each row has embed_dim numbers</span><br>
           C = matrix of shape [vocab_size, embed_dim]<br><br>
-          <span class="comment">// Look up embedding for token 'e' (ID = 1)</span><br>
-          embedding('e') = C[1] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
-          <span class="comment">// For a context of 8 characters, concatenate their embeddings</span><br>
-          input_vector = concat(C[token_0], C[token_1], ..., C[token_7])<br>
-          input_vector has size = 8 × embed_dim = 128 numbers
+          <span class="comment">// Example: token "the" has ID 42</span><br>
+          <span class="comment">// Its embedding is row 42 of the table — a vector of 24 numbers</span><br>
+          C[42] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
+          <span class="comment">// To feed 8 tokens into the network, concatenate their embeddings</span><br>
+          input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4])<br>
+          <span class="comment">// Result: a single vector of 8 × 24 = 192 numbers</span>
         </div>
       </section>
 
@@ -97,14 +133,14 @@
         <h2><span class="step-num">4</span> The Neural Network</h2>
         <p>
           The concatenated embeddings flow through a neural network that learns to map patterns in the
-          input to predictions about the next character. Our model uses one hidden layer with a <strong>tanh</strong>
+          input to predictions about the next token. Our model uses one hidden layer with a <strong>tanh</strong>
           activation function.
         </p>
         <div class="card">
           <div class="architecture-diagram">
-            <div class="arch-block input">Characters<br><small>8 tokens</small></div>
+            <div class="arch-block input">Input<br><small>8 tokens</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block embed">Embeddings<br><small>8 × 16 = 128</small></div>
+            <div class="arch-block embed">Embeddings<br><small>8 × 24 = 192</small></div>
             <span class="arch-arrow">→</span>
             <div class="arch-block hidden">Hidden Layer<br><small>128 neurons, tanh</small></div>
             <span class="arch-arrow">→</span>
@@ -114,7 +150,7 @@
         <div class="math-block">
           <span class="comment">// Forward pass through the network</span><br>
           hidden = tanh(input_vector × W1 + b1) &nbsp; <span class="comment">// 128 neurons learn patterns</span><br>
-          logits = hidden × W2 + b2 &nbsp; <span class="comment">// raw scores for each character</span><br>
+          logits = hidden × W2 + b2 &nbsp; <span class="comment">// raw scores for each token</span><br>
           probs = softmax(logits) &nbsp; <span class="comment">// convert to probabilities (sum to 1)</span><br><br>
           <span class="comment">// Softmax formula: turns any numbers into probabilities</span><br>
           softmax(x_i) = exp(x_i) / sum(exp(x_j) for all j)
@@ -125,14 +161,14 @@
       <section class="concept-section">
         <h2><span class="step-num">5</span> Training</h2>
         <p>
-          Training is how the model learns. We show it examples from the text: "given these 8 characters,
+          Training is how the model learns. We show it examples from the text: "given these 8 tokens,
           the next one should be X." The model makes a prediction, we measure how wrong it was (the <strong>loss</strong>),
           and then nudge all the parameters slightly to make a better prediction next time. This is called
           <strong>gradient descent</strong>.
         </p>
         <div class="math-block">
           <span class="comment">// 1. Loss: how wrong was the prediction?</span><br>
-          loss = -log(probability assigned to the correct character)<br>
+          loss = -log(probability assigned to the correct token)<br>
           <span class="comment">// If model gave 90% to correct answer: loss = 0.105 (low = good)</span><br>
           <span class="comment">// If model gave 1% to correct answer: loss = 4.605 (high = bad)</span><br><br>
           <span class="comment">// 2. Gradients: which direction to adjust each parameter?</span><br>
@@ -159,9 +195,9 @@
       <section class="concept-section">
         <h2><span class="step-num">6</span> Generation</h2>
         <p>
-          To generate text, we start with a seed and repeatedly predict the next character. Each prediction
+          To generate text, we start with a seed and repeatedly predict the next token. Each prediction
           is <strong>sampled</strong> from the probability distribution — we don't always pick the most likely
-          character. The <strong>temperature</strong> parameter controls randomness.
+          token. The <strong>temperature</strong> parameter controls randomness.
         </p>
         <div class="card" id="prediction-demo"></div>
         <div class="math-block">
@@ -198,9 +234,9 @@
         </p>
 
         <div class="sample-buttons">
-          <button class="sample-btn" data-sample="shakespeare">Shakespeare</button>
-          <button class="sample-btn" data-sample="nursery">Nursery Rhymes</button>
-          <button class="sample-btn" data-sample="code">JavaScript Code</button>
+          <button class="sample-btn" data-sample="1">Example #1</button>
+          <button class="sample-btn" data-sample="2">Example #2</button>
+          <button class="sample-btn" data-sample="3">Example #3</button>
         </div>
 
         <div class="text-input-area">
@@ -215,16 +251,54 @@
         </div>
       </div>
 
-      <!-- Step 2: Configure & Train -->
+      <!-- Step 2: Tokenize -->
       <div class="lab-section">
-        <h2>2. Train</h2>
+        <h2>2. Tokenize</h2>
+        <p style="color:var(--text-secondary); font-size:14px; margin-bottom:12px;">
+          Run BPE tokenization on your text to build a vocabulary before training.
+        </p>
+
+        <div class="controls-row">
+          <div class="control-group">
+            <label>Vocab Size</label>
+            <div class="slider-row">
+              <input type="range" id="slider-vocab" min="50" max="300" step="10" value="150">
+              <span class="slider-val" id="val-vocab">150</span>
+              <span style="font-size:11px; color:var(--text-muted)">tokens</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-tokenize">
+            Tokenize
+          </button>
+        </div>
+      </div>
+
+      <!-- Tokenization Visualization -->
+      <div id="tokenization-viz" style="display:none">
+        <div class="lab-section">
+          <h2>Tokenization Result</h2>
+          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
+            BPE learned these merge rules from your text. Hover over tokens to see their IDs.
+          </p>
+          <div id="token-viz-merges"></div>
+          <h3 style="margin-top:20px; margin-bottom:10px; font-size:15px; color:var(--text-secondary);">Tokenized Text (first 300 tokens)</h3>
+          <div id="token-viz-text"></div>
+        </div>
+      </div>
+
+      <!-- Step 3: Train -->
+      <div class="lab-section" id="train-section" style="display:none">
+        <h2>3. Train</h2>
 
         <div class="controls-row">
           <div class="control-group">
             <label>Learning Rate</label>
             <div class="slider-row">
-              <input type="range" id="slider-lr" min="0.001" max="0.05" step="0.001" value="0.01">
-              <span class="slider-val" id="val-lr">0.010</span>
+              <input type="range" id="slider-lr" min="0.001" max="0.1" step="0.001" value="0.05">
+              <span class="slider-val" id="val-lr">0.050</span>
             </div>
           </div>
           <div class="control-group">
@@ -267,7 +341,7 @@
               <canvas id="loss-canvas"></canvas>
             </div>
             <div class="viz-panel">
-              <h4>Character Embeddings (2D projection)</h4>
+              <h4>Token Embeddings (2D projection)</h4>
               <canvas id="embedding-canvas"></canvas>
             </div>
           </div>
@@ -282,9 +356,9 @@
       <!-- Step 3: Generate -->
       <div id="generation-section">
         <div class="lab-section">
-          <h2>3. Generate Text</h2>
+          <h2>4. Generate Text</h2>
           <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
-            Enter a seed prompt and watch the model generate text character by character.
+            Enter a seed prompt and watch the model generate text token by token.
             Opacity reflects confidence.
           </p>
 
@@ -292,8 +366,36 @@
             <div class="control-group">
               <label>Temperature</label>
               <div class="slider-row">
-                <input type="range" id="slider-temp" min="0.1" max="2.0" step="0.05" value="0.8">
-                <span class="slider-val" id="val-temp">0.80</span>
+                <input type="range" id="slider-temp" min="0.1" max="2.0" step="0.05" value="0.3">
+                <span class="slider-val" id="val-temp">0.30</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Top-K <span style="font-weight:400; color:var(--text-muted)">(0 = off)</span></label>
+              <div class="slider-row">
+                <input type="range" id="slider-topk" min="0" max="50" step="1" value="5">
+                <span class="slider-val" id="val-topk">5</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Top-P <span style="font-weight:400; color:var(--text-muted)">(1.0 = off)</span></label>
+              <div class="slider-row">
+                <input type="range" id="slider-topp" min="0" max="1.0" step="0.05" value="0.5">
+                <span class="slider-val" id="val-topp">0.50</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Rep. Penalty <span style="font-weight:400; color:var(--text-muted)">(1.0 = off)</span></label>
+              <div class="slider-row">
+                <input type="range" id="slider-reppen" min="1.0" max="2.0" step="0.05" value="1.5">
+                <span class="slider-val" id="val-reppen">1.50</span>
+              </div>
+            </div>
+            <div class="control-group">
+              <label>Length <span style="font-weight:400; color:var(--text-muted)">tokens</span></label>
+              <div class="slider-row">
+                <input type="range" id="slider-length" min="10" max="200" step="5" value="80">
+                <span class="slider-val" id="val-length">80</span>
               </div>
             </div>
           </div>
@@ -311,6 +413,7 @@
     </div>
   </div>
 
+  <script src="js/tokenizer.js"></script>
   <script src="js/model.js"></script>
   <script src="js/app.js"></script>
 </body>
