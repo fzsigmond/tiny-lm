@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiny Language Model — Learn & Build</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ======== Header ======== -->
+  <header>
+    <div class="container header-inner">
+      <div class="logo">tiny<span>LM</span></div>
+      <nav>
+        <button class="nav-tab active" data-page="learn">Learn</button>
+        <button class="nav-tab" data-page="lab">Lab</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ======== LEARN PAGE ======== -->
+  <div id="page-learn" class="page active">
+    <div class="container">
+
+      <div class="hero">
+        <h1>How <span class="gradient-text">Language Models</span> Work</h1>
+        <p>A hands-on guide to understanding the AI behind ChatGPT, from the ground up. No PhD required.</p>
+      </div>
+
+      <!-- 1. What is an LLM? -->
+      <section class="concept-section">
+        <h2><span class="step-num">1</span> What is a Language Model?</h2>
+        <p>
+          A language model is a program that predicts the next word (or character) given what came before.
+          That's it. When you type "The cat sat on the" — a language model figures out that "mat" is more
+          likely than "xylophone". By chaining these predictions together, it can generate whole paragraphs
+          of coherent text.
+        </p>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--accent)"></span>Core idea</h3>
+            <p>Given a sequence of text, predict what comes next. Each prediction is a probability distribution
+              over all possible next characters.</p>
+          </div>
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--green)"></span>Why it works</h3>
+            <p>Language has patterns. After learning millions of patterns from text, the model captures grammar,
+              facts, and even reasoning — all from next-token prediction.</p>
+          </div>
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--orange)"></span>Scale matters</h3>
+            <p>GPT-4 has ~1.8 trillion parameters. Our tiny model has ~20,000. Same idea, vastly different scale.
+              But the fundamentals are identical.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Tokenization -->
+      <section class="concept-section">
+        <h2><span class="step-num">2</span> Tokenization</h2>
+        <p>
+          Before a model can process text, it needs to convert characters into numbers. This is called
+          <strong>tokenization</strong>. Real LLMs use subword tokenizers (like BPE), but our tiny model
+          uses the simplest approach: each character becomes its own token.
+        </p>
+        <div class="card" id="tokenization-demo"></div>
+        <div class="math-block">
+          <span class="comment">// Each character maps to a unique integer</span><br>
+          'H' → 0, &nbsp; 'e' → 1, &nbsp; 'l' → 2, &nbsp; 'o' → 3, &nbsp; ' ' → 4, &nbsp; 'W' → 5, ...<br><br>
+          <span class="comment">// Vocabulary = set of all unique tokens</span><br>
+          vocab_size = number of unique characters in training text
+        </div>
+      </section>
+
+      <!-- 3. Embeddings -->
+      <section class="concept-section">
+        <h2><span class="step-num">3</span> Embeddings</h2>
+        <p>
+          Raw token IDs (like 0, 1, 2) don't carry meaning. An <strong>embedding</strong> converts each
+          token into a vector of numbers that the neural network can work with. Characters with similar
+          roles (like vowels, or punctuation) end up with similar embeddings as the model trains.
+        </p>
+        <div class="math-block">
+          <span class="comment">// Embedding table: each token gets a vector of numbers</span><br>
+          C = matrix of shape [vocab_size, embed_dim]<br><br>
+          <span class="comment">// Look up embedding for token 'e' (ID = 1)</span><br>
+          embedding('e') = C[1] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
+          <span class="comment">// For a context of 6 characters, concatenate their embeddings</span><br>
+          input_vector = concat(C[token_0], C[token_1], ..., C[token_5])<br>
+          input_vector has size = 6 × embed_dim = 72 numbers
+        </div>
+      </section>
+
+      <!-- 4. The Neural Network -->
+      <section class="concept-section">
+        <h2><span class="step-num">4</span> The Neural Network</h2>
+        <p>
+          The concatenated embeddings flow through a neural network that learns to map patterns in the
+          input to predictions about the next character. Our model uses one hidden layer with a <strong>tanh</strong>
+          activation function.
+        </p>
+        <div class="card">
+          <div class="architecture-diagram">
+            <div class="arch-block input">Characters<br><small>6 tokens</small></div>
+            <span class="arch-arrow">→</span>
+            <div class="arch-block embed">Embeddings<br><small>6 × 12 = 72</small></div>
+            <span class="arch-arrow">→</span>
+            <div class="arch-block hidden">Hidden Layer<br><small>100 neurons, tanh</small></div>
+            <span class="arch-arrow">→</span>
+            <div class="arch-block output">Predictions<br><small>softmax → probs</small></div>
+          </div>
+        </div>
+        <div class="math-block">
+          <span class="comment">// Forward pass through the network</span><br>
+          hidden = tanh(input_vector × W1 + b1) &nbsp; <span class="comment">// 100 neurons learn patterns</span><br>
+          logits = hidden × W2 + b2 &nbsp; <span class="comment">// raw scores for each character</span><br>
+          probs = softmax(logits) &nbsp; <span class="comment">// convert to probabilities (sum to 1)</span><br><br>
+          <span class="comment">// Softmax formula: turns any numbers into probabilities</span><br>
+          softmax(x_i) = exp(x_i) / sum(exp(x_j) for all j)
+        </div>
+      </section>
+
+      <!-- 5. Training -->
+      <section class="concept-section">
+        <h2><span class="step-num">5</span> Training</h2>
+        <p>
+          Training is how the model learns. We show it examples from the text: "given these 6 characters,
+          the next one should be X." The model makes a prediction, we measure how wrong it was (the <strong>loss</strong>),
+          and then nudge all the parameters slightly to make a better prediction next time. This is called
+          <strong>gradient descent</strong>.
+        </p>
+        <div class="math-block">
+          <span class="comment">// 1. Loss: how wrong was the prediction?</span><br>
+          loss = -log(probability assigned to the correct character)<br>
+          <span class="comment">// If model gave 90% to correct answer: loss = 0.105 (low = good)</span><br>
+          <span class="comment">// If model gave 1% to correct answer: loss = 4.605 (high = bad)</span><br><br>
+          <span class="comment">// 2. Gradients: which direction to adjust each parameter?</span><br>
+          gradients = d(loss) / d(parameters) &nbsp; <span class="comment">// computed via backpropagation</span><br><br>
+          <span class="comment">// 3. Update: nudge parameters to reduce loss</span><br>
+          parameters = parameters - learning_rate × gradients<br>
+          <span class="comment">// learning_rate controls step size (typically 0.001 to 0.1)</span>
+        </div>
+        <div class="concept-grid">
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--accent)"></span>Batch training</h3>
+            <p>Instead of updating after every single example, we average gradients over a "mini-batch"
+              of examples (e.g., 64 at a time). This makes training faster and more stable.</p>
+          </div>
+          <div class="concept-card">
+            <h3><span class="card-color" style="background:var(--pink)"></span>Overfitting</h3>
+            <p>With enough training, the model memorizes the training text exactly. For our tiny model,
+              this is expected! Real LLMs train on trillions of tokens to avoid this.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Generation -->
+      <section class="concept-section">
+        <h2><span class="step-num">6</span> Generation</h2>
+        <p>
+          To generate text, we start with a seed and repeatedly predict the next character. Each prediction
+          is <strong>sampled</strong> from the probability distribution — we don't always pick the most likely
+          character. The <strong>temperature</strong> parameter controls randomness.
+        </p>
+        <div class="card" id="prediction-demo"></div>
+        <div class="math-block">
+          <span class="comment">// Temperature controls randomness</span><br>
+          scaled_logits = logits / temperature<br><br>
+          temperature = 0.1 → almost always picks the top prediction (deterministic)<br>
+          temperature = 1.0 → samples proportionally from the distribution<br>
+          temperature = 2.0 → more random, more creative/chaotic
+        </div>
+        <div style="text-align:center; margin-top:32px;">
+          <button class="btn btn-primary nav-tab" data-page="lab" style="font-size:16px; padding:14px 32px;">
+            Try it yourself in the Lab →
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ======== LAB PAGE ======== -->
+  <div id="page-lab" class="page">
+    <div class="container">
+
+      <h1 style="font-size:28px; font-weight:700; margin-bottom:8px;">The Lab</h1>
+      <p style="color:var(--text-secondary); margin-bottom:32px;">
+        Train your own tiny language model right in the browser. Add text, hit train, and watch it learn.
+      </p>
+
+      <!-- Step 1: Input Data -->
+      <div class="lab-section">
+        <h2>1. Training Data</h2>
+        <p style="color:var(--text-secondary); font-size:14px; margin-bottom:12px;">
+          Paste text, load a sample, or upload a .txt file. More text = better patterns to learn.
+        </p>
+
+        <div class="sample-buttons">
+          <button class="sample-btn" data-sample="shakespeare">Shakespeare</button>
+          <button class="sample-btn" data-sample="nursery">Nursery Rhymes</button>
+          <button class="sample-btn" data-sample="code">JavaScript Code</button>
+        </div>
+
+        <div class="text-input-area">
+          <textarea id="training-text" placeholder="Paste or type your training text here..."></textarea>
+        </div>
+        <div id="text-stats"></div>
+        <div class="upload-area">
+          <label class="upload-btn" for="file-upload">
+            Upload .txt file
+          </label>
+          <input type="file" id="file-upload" accept=".txt">
+        </div>
+      </div>
+
+      <!-- Step 2: Configure & Train -->
+      <div class="lab-section">
+        <h2>2. Train</h2>
+
+        <div class="controls-row">
+          <div class="control-group">
+            <label>Learning Rate</label>
+            <div class="slider-row">
+              <input type="range" id="slider-lr" min="0.001" max="0.1" step="0.001" value="0.05">
+              <span class="slider-val" id="val-lr">0.050</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label>Training Speed</label>
+            <div class="slider-row">
+              <input type="range" id="slider-speed" min="1" max="50" step="1" value="5">
+              <span class="slider-val" id="val-speed">5</span>
+              <span style="font-size:11px; color:var(--text-muted)">steps/frame</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="model-info"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-train">
+            <span class="btn-icon">&#9654;</span> Train Model
+          </button>
+          <button class="btn btn-danger" id="btn-stop" style="display:none">
+            <span class="btn-icon">&#9632;</span> Pause
+          </button>
+          <button class="btn btn-secondary" id="btn-reset" style="display:none">
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Training Visualization -->
+      <div id="training-viz">
+        <div class="lab-section">
+          <h2>Training Progress</h2>
+          <div class="training-header">
+            <span id="step-counter">Step: 0</span>
+            <span id="loss-value">Loss: —</span>
+          </div>
+
+          <div class="viz-grid">
+            <div class="viz-panel">
+              <h4>Loss Over Time</h4>
+              <canvas id="loss-canvas"></canvas>
+            </div>
+            <div class="viz-panel">
+              <h4>Character Embeddings (2D projection)</h4>
+              <canvas id="embedding-canvas"></canvas>
+            </div>
+          </div>
+
+          <div class="viz-panel">
+            <h4>Live Predictions</h4>
+            <div id="live-predictions"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Generate -->
+      <div id="generation-section">
+        <div class="lab-section">
+          <h2>3. Generate Text</h2>
+          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
+            Enter a seed prompt and watch the model generate text character by character.
+            Opacity reflects confidence.
+          </p>
+
+          <div class="controls-row" style="margin-bottom:16px;">
+            <div class="control-group">
+              <label>Temperature</label>
+              <div class="slider-row">
+                <input type="range" id="slider-temp" min="0.1" max="2.0" step="0.05" value="0.8">
+                <span class="slider-val" id="val-temp">0.80</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gen-input-row">
+            <input type="text" id="prompt-input" placeholder="Type a seed prompt (e.g. &quot;The &quot;)...">
+            <button class="btn btn-primary" id="btn-generate">Generate</button>
+          </div>
+
+          <div id="generation-output"></div>
+          <div id="generation-steps-viz"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/model.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
