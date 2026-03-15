@@ -547,6 +547,86 @@ nav {
 
 /* ---- Lab Page ---- */
 
+.lab-step {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+
+.lab-step-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.lab-step-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lab-step-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.step-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+.lab-step-content {
+  padding: 0 20px 20px;
+}
+
+/* Step states */
+.lab-step.collapsed .lab-step-content {
+  display: none;
+}
+
+.lab-step.locked {
+  opacity: 0.35;
+}
+
+.lab-step.locked .lab-step-header {
+  cursor: default;
+  pointer-events: none;
+}
+
+.lab-step.completed .step-indicator {
+  background: var(--green-glow);
+  color: var(--green);
+}
+
+.lab-step.completed .lab-step-header {
+  cursor: pointer;
+}
+
+.lab-step.active {
+  border-color: rgba(79, 143, 247, 0.3);
+}
+
+.lab-step.active .step-indicator {
+  background: var(--accent);
+  color: #fff;
+}
+
 .lab-section {
   margin-bottom: 32px;
 }
@@ -755,6 +835,16 @@ input[type="file"] {
   background: rgba(247, 95, 138, 0.2);
 }
 
+.btn-success {
+  background: rgba(79, 199, 143, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(79, 199, 143, 0.2);
+}
+
+.btn-success:hover {
+  background: rgba(79, 199, 143, 0.2);
+}
+
 .btn-secondary {
   background: var(--bg-card);
   color: var(--text-secondary);
@@ -819,6 +909,7 @@ input[type="file"] {
   display: block;
 }
 
+
 .viz-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -874,11 +965,6 @@ input[type="file"] {
 }
 
 /* Generation section */
-
-#generation-section {
-  display: none;
-  margin-top: 32px;
-}
 
 .gen-input-row {
   display: flex;
@@ -1318,9 +1404,19 @@ input[type="file"] {
     font-size: 17px;
   }
 
-  #generation-section {
-    margin-top: 20px;
+  /* Lab steps */
+  .lab-step-header {
+    padding: 14px 16px;
   }
+
+  .lab-step-content {
+    padding: 0 16px 16px;
+  }
+
+  .lab-step-header h2 {
+    font-size: 15px;
+  }
+
 }
 
 /* Ensure touch targets are at least 44px on touch devices */
