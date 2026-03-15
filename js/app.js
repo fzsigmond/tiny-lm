@@ -285,6 +285,8 @@ const app = {
   clearTrainingUI() {
     document.getElementById('training-viz').classList.remove('active');
     document.getElementById('model-info').innerHTML = '';
+    document.getElementById('slider-embed').disabled = false;
+    document.getElementById('slider-context').disabled = false;
     document.getElementById('btn-train').innerHTML = '<span class="btn-icon">&#9654;</span> Train Model';
     document.getElementById('btn-train').style.display = 'inline-flex';
     document.getElementById('btn-pause').style.display = 'none';

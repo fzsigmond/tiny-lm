@@ -99,8 +99,9 @@
           <div class="concept-card">
             <h3><span class="card-color" style="background:var(--accent)"></span>The lookup table</h3>
             <p>The model stores a big table (matrix) where each row is one token's embedding. To get
-              the embedding for token #42, it just looks up row 42. This table starts random and is
-              learned during training.</p>
+              the embedding for token #42, it just looks up row 42. The number of dimensions is a
+              configurable parameter — our tiny model defaults to 8, while GPT-style models use
+              thousands. You can adjust this in the Lab.</p>
           </div>
           <div class="concept-card">
             <h3><span class="card-color" style="background:var(--green)"></span>Similar tokens cluster</h3>
@@ -110,7 +111,7 @@
           </div>
           <div class="concept-card">
             <h3><span class="card-color" style="background:var(--purple)"></span>Context window</h3>
-            <p>The model looks at several tokens at once (a "context window" of 8 tokens in our case).
+            <p>The model looks at several tokens at once (a "context window" of 10 tokens in our case).
               It concatenates their embeddings into one long vector, giving the neural network a
               complete picture of the recent context.</p>
           </div>
@@ -120,11 +121,11 @@
           <span class="comment">// The embedding table: one row per token, each row has embed_dim numbers</span><br>
           C = matrix of shape [vocab_size, embed_dim]<br><br>
           <span class="comment">// Example: token "the" has ID 42</span><br>
-          <span class="comment">// Its embedding is row 42 of the table — a vector of 24 numbers</span><br>
+          <span class="comment">// Its embedding is row 42 of the table — a vector of 8 numbers</span><br>
           C[42] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
-          <span class="comment">// To feed 8 tokens into the network, concatenate their embeddings</span><br>
+          <span class="comment">// To feed 10 tokens into the network, concatenate their embeddings</span><br>
           input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4])<br>
-          <span class="comment">// Result: a single vector of 8 × 24 = 192 numbers</span>
+          <span class="comment">// Result: a single vector of 10 × 8 = 80 numbers</span>
         </div>
       </section>
 
@@ -138,9 +139,9 @@
         </p>
         <div class="card">
           <div class="architecture-diagram">
-            <div class="arch-block input">Input<br><small>8 tokens</small></div>
+            <div class="arch-block input">Input<br><small>10 tokens</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block embed">Embeddings<br><small>8 × 24 = 192</small></div>
+            <div class="arch-block embed">Embeddings<br><small>10 × 8 = 80</small></div>
             <span class="arch-arrow">→</span>
             <div class="arch-block hidden">Hidden Layer<br><small>128 neurons, tanh</small></div>
             <span class="arch-arrow">→</span>
@@ -161,7 +162,7 @@
       <section class="concept-section">
         <h2><span class="step-num">5</span> Training</h2>
         <p>
-          Training is how the model learns. We show it examples from the text: "given these 8 tokens,
+          Training is how the model learns. We show it examples from the text: "given these 10 tokens,
           the next one should be X." The model makes a prediction, we measure how wrong it was (the <strong>loss</strong>),
           and then nudge all the parameters slightly to make a better prediction next time. This is called
           <strong>gradient descent</strong>.
@@ -313,15 +314,15 @@
             <div class="control-group">
               <label>Embed Dims</label>
               <div class="slider-row">
-                <input type="range" id="slider-embed" min="8" max="64" step="4" value="24">
-                <span class="slider-val" id="val-embed">24</span>
+                <input type="range" id="slider-embed" min="8" max="64" step="4" value="8">
+                <span class="slider-val" id="val-embed">8</span>
               </div>
             </div>
             <div class="control-group">
               <label>Context Window <span class="label-unit">tokens</span></label>
               <div class="slider-row">
-                <input type="range" id="slider-context" min="3" max="16" step="1" value="8">
-                <span class="slider-val" id="val-context">8</span>
+                <input type="range" id="slider-context" min="3" max="16" step="1" value="10">
+                <span class="slider-val" id="val-context">10</span>
               </div>
             </div>
             <div class="control-group">

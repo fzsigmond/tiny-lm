@@ -8,8 +8,8 @@
 
 class MiniLM {
   constructor(config = {}) {
-    this.blockSize = config.blockSize || 8;
-    this.embedDim = config.embedDim || 24;
+    this.blockSize = config.blockSize || 10;
+    this.embedDim = config.embedDim || 8;
     this.hiddenSize = config.hiddenSize || 128;
     this.learningRate = config.learningRate || 0.05;
     this.batchSize = config.batchSize || 32;
