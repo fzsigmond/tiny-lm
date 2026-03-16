@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tiny-lm.cc/sitemap.xml
