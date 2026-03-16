@@ -25,7 +25,7 @@
 
       <div class="hero">
         <h1>How <span class="gradient-text">Language Models</span> Work</h1>
-        <p>A hands-on guide to understanding the AI behind ChatGPT, from the ground up. No PhD required.</p>
+        <p>A hands-on guide to the core ideas behind language models, from the ground up.</p>
       </div>
 
       <!-- 1. What is an LLM? -->
@@ -50,7 +50,7 @@
           </div>
           <div class="concept-card">
             <h3><span class="card-color" style="background:var(--orange)"></span>Scale matters</h3>
-            <p>GPT-4 has ~1.8 trillion parameters. Our tiny model has ~20,000. Same idea, vastly different scale.
+            <p>Frontier models can have trillions of parameters. Our tiny model has ~20,000. Same idea, vastly different scale.
               But the fundamentals are identical.</p>
           </div>
         </div>
@@ -124,7 +124,7 @@
           <span class="comment">// Its embedding is row 42 of the table — a vector of 8 numbers</span><br>
           C[42] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
           <span class="comment">// To feed 10 tokens into the network, concatenate their embeddings</span><br>
-          input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4])<br>
+          input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4], ...)<br>
           <span class="comment">// Result: a single vector of 10 × 8 = 80 numbers</span>
         </div>
       </section>
