@@ -52,8 +52,9 @@
     <div class="container header-inner">
       <div class="logo">tiny<span>LM</span></div>
       <nav>
-        <button class="nav-tab active" data-page="learn">Learn</button>
-        <button class="nav-tab" data-page="lab">Lab</button>
+        <span class="lang-switch"><button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button><button class="lang-btn" data-lang="pt" onclick="setLang('pt')">PT</button></span>
+        <button class="nav-tab active" data-page="learn" data-i18n="nav.learn">Learn</button>
+        <button class="nav-tab" data-page="lab" data-i18n="nav.lab">Lab</button>
       </nav>
     </div>
   </header>
@@ -63,14 +64,14 @@
     <div class="container">
 
       <div class="hero">
-        <h1>How <span class="gradient-text">Language Models</span> Work</h1>
-        <p>A hands-on guide to the core ideas behind language models, from the ground up.</p>
+        <h1 data-i18n="hero.title">How <span class="gradient-text">Language Models</span> Work</h1>
+        <p data-i18n="hero.sub">A hands-on guide to the core ideas behind language models, from the ground up.</p>
       </div>
 
       <!-- 1. What is an LLM? -->
       <section class="concept-section">
-        <h2><span class="step-num">1</span> What is a Language Model?</h2>
-        <p>
+        <h2><span class="step-num">1</span> <span data-i18n="s1.title">What is a Language Model?</span></h2>
+        <p data-i18n="s1.p">
           A language model is a program that predicts the next token given what came before.
           That's it. When you type "The cat sat on the" — a language model figures out that "mat" is more
           likely than "xylophone". By chaining these predictions together, it can generate whole paragraphs
@@ -78,18 +79,18 @@
         </p>
         <div class="concept-grid">
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--accent)"></span>Core idea</h3>
-            <p>Given a sequence of text, predict what comes next. Each prediction is a probability distribution
+            <h3><span class="card-color" style="background:var(--accent)"></span><span data-i18n="s1.c1.t">Core idea</span></h3>
+            <p data-i18n="s1.c1.p">Given a sequence of text, predict what comes next. Each prediction is a probability distribution
               over all possible next tokens.</p>
           </div>
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--green)"></span>Why it works</h3>
-            <p>Language has patterns. After learning millions of patterns from text, the model captures grammar,
+            <h3><span class="card-color" style="background:var(--green)"></span><span data-i18n="s1.c2.t">Why it works</span></h3>
+            <p data-i18n="s1.c2.p">Language has patterns. After learning millions of patterns from text, the model captures grammar,
               facts, and even reasoning — all from next-token prediction.</p>
           </div>
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--orange)"></span>Scale matters</h3>
-            <p>Frontier models can have trillions of parameters. Our tiny model has ~20,000. Same idea, vastly different scale.
+            <h3><span class="card-color" style="background:var(--orange)"></span><span data-i18n="s1.c3.t">Scale matters</span></h3>
+            <p data-i18n="s1.c3.p">Frontier models can have trillions of parameters. Our tiny model has ~20,000. Same idea, vastly different scale.
               But the fundamentals are identical.</p>
           </div>
         </div>
@@ -97,15 +98,15 @@
 
       <!-- 2. Tokenization -->
       <section class="concept-section">
-        <h2><span class="step-num">2</span> Tokenization</h2>
-        <p>
+        <h2><span class="step-num">2</span> <span data-i18n="s2.title">Tokenization</span></h2>
+        <p data-i18n="s2.p">
           Before a model can process text, it needs to break it into <strong>tokens</strong> — meaningful
           pieces that each get a numeric ID. Our model uses <strong>Byte Pair Encoding (BPE)</strong>,
           the same algorithm used by GPT and most modern LLMs. BPE starts with individual characters and
           iteratively merges the most frequent adjacent pairs into new tokens like "the", "ing", or "at".
         </p>
         <div class="card" id="tokenization-demo"></div>
-        <div class="math-block">
+        <div class="math-block" data-i18n="s2.math">
           <span class="comment">// BPE Algorithm:</span><br>
           1. Start with individual characters as tokens<br>
           2. Count all adjacent token pairs<br>
@@ -119,14 +120,14 @@
 
       <!-- 3. Embeddings -->
       <section class="concept-section">
-        <h2><span class="step-num">3</span> Embeddings</h2>
-        <p>
+        <h2><span class="step-num">3</span> <span data-i18n="s3.title">Embeddings</span></h2>
+        <p data-i18n="s3.p">
           After tokenization, each token is just a number — an ID like 0, 1, or 42. But a number alone
           doesn't tell the model anything about what a token <em>means</em>. The model needs a richer
           representation: a list of numbers (a <strong>vector</strong>) that captures a token's properties.
           That's what an <strong>embedding</strong> is.
         </p>
-        <p style="color:var(--text-secondary); font-size:15px; max-width:720px; margin-bottom:20px;">
+        <p style="color:var(--text-secondary); font-size:15px; max-width:720px; margin-bottom:20px;" data-i18n="s3.p2">
           Think of it like coordinates. A city can be described by two numbers (latitude, longitude)
           that tell you where it is relative to other cities. An embedding does the same thing for a token,
           but in many more dimensions. Each dimension might loosely capture something like "how noun-like is
@@ -136,58 +137,58 @@
 
         <div class="concept-grid">
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--accent)"></span>The lookup table</h3>
-            <p>The model stores a big table (matrix) where each row is one token's embedding. To get
+            <h3><span class="card-color" style="background:var(--accent)"></span><span data-i18n="s3.c1.t">The lookup table</span></h3>
+            <p data-i18n="s3.c1.p">The model stores a big table (matrix) where each row is one token's embedding. To get
               the embedding for token #42, it just looks up row 42. The number of dimensions is a
               configurable parameter — our tiny model defaults to 8, while GPT-style models use
               thousands. You can adjust this in the Lab.</p>
           </div>
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--green)"></span>Similar tokens cluster</h3>
-            <p>As the model trains, tokens that behave similarly — like "the" and "a", or "run" and
+            <h3><span class="card-color" style="background:var(--green)"></span><span data-i18n="s3.c2.t">Similar tokens cluster</span></h3>
+            <p data-i18n="s3.c2.p">As the model trains, tokens that behave similarly — like "the" and "a", or "run" and
               "walk" — end up with similar embeddings (nearby vectors). You can see this in the
               embedding plot in the Lab.</p>
           </div>
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--purple)"></span>Context window</h3>
-            <p>The model looks at several tokens at once (a "context window" of 10 tokens in our case).
+            <h3><span class="card-color" style="background:var(--purple)"></span><span data-i18n="s3.c3.t">Context window</span></h3>
+            <p data-i18n="s3.c3.p">The model looks at several tokens at once (a "context window" of 5 tokens in our case).
               It concatenates their embeddings into one long vector, giving the neural network a
               complete picture of the recent context.</p>
           </div>
         </div>
 
-        <div class="math-block">
+        <div class="math-block" data-i18n="s3.math">
           <span class="comment">// The embedding table: one row per token, each row has embed_dim numbers</span><br>
           C = matrix of shape [vocab_size, embed_dim]<br><br>
           <span class="comment">// Example: token "the" has ID 42</span><br>
           <span class="comment">// Its embedding is row 42 of the table — a vector of 8 numbers</span><br>
           C[42] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
-          <span class="comment">// To feed 10 tokens into the network, concatenate their embeddings</span><br>
-          input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4], ...)<br>
-          <span class="comment">// Result: a single vector of 10 × 8 = 80 numbers</span>
+          <span class="comment">// To feed 5 tokens into the network, concatenate their embeddings</span><br>
+          input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4])<br>
+          <span class="comment">// Result: a single vector of 5 × 8 = 40 numbers</span>
         </div>
       </section>
 
       <!-- 4. The Neural Network -->
       <section class="concept-section">
-        <h2><span class="step-num">4</span> The Neural Network</h2>
-        <p>
+        <h2><span class="step-num">4</span> <span data-i18n="s4.title">The Neural Network</span></h2>
+        <p data-i18n="s4.p">
           The concatenated embeddings flow through a neural network that learns to map patterns in the
           input to predictions about the next token. Our model uses one hidden layer with a <strong>tanh</strong>
           activation function.
         </p>
         <div class="card">
           <div class="architecture-diagram">
-            <div class="arch-block input">Input<br><small>10 tokens</small></div>
+            <div class="arch-block input" data-i18n="s4.a1">Input<br><small>5 tokens</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block embed">Embeddings<br><small>10 × 8 = 80</small></div>
+            <div class="arch-block embed" data-i18n="s4.a2">Embeddings<br><small>5 × 8 = 40</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block hidden">Hidden Layer<br><small>128 neurons, tanh</small></div>
+            <div class="arch-block hidden" data-i18n="s4.a3">Hidden Layer<br><small>128 neurons, tanh</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block output">Predictions<br><small>softmax → probs</small></div>
+            <div class="arch-block output" data-i18n="s4.a4">Predictions<br><small>softmax → probs</small></div>
           </div>
         </div>
-        <div class="math-block">
+        <div class="math-block" data-i18n="s4.math">
           <span class="comment">// Forward pass through the network</span><br>
           hidden = tanh(input_vector × W1 + b1) &nbsp; <span class="comment">// 128 neurons learn patterns</span><br>
           logits = hidden × W2 + b2 &nbsp; <span class="comment">// raw scores for each token</span><br>
@@ -199,14 +200,14 @@
 
       <!-- 5. Training -->
       <section class="concept-section">
-        <h2><span class="step-num">5</span> Training</h2>
-        <p>
-          Training is how the model learns. We show it examples from the text: "given these 10 tokens,
+        <h2><span class="step-num">5</span> <span data-i18n="s5.title">Training</span></h2>
+        <p data-i18n="s5.p">
+          Training is how the model learns. We show it examples from the text: "given these 5 tokens,
           the next one should be X." The model makes a prediction, we measure how wrong it was (the <strong>loss</strong>),
           and then nudge all the parameters slightly to make a better prediction next time. This is called
           <strong>gradient descent</strong>.
         </p>
-        <div class="math-block">
+        <div class="math-block" data-i18n="s5.math">
           <span class="comment">// 1. Loss: how wrong was the prediction?</span><br>
           loss = -log(probability assigned to the correct token)<br>
           <span class="comment">// If model gave 90% to correct answer: loss = 0.105 (low = good)</span><br>
@@ -219,13 +220,13 @@
         </div>
         <div class="concept-grid">
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--accent)"></span>Batch training</h3>
-            <p>Instead of updating after every single example, we average gradients over a "mini-batch"
+            <h3><span class="card-color" style="background:var(--accent)"></span><span data-i18n="s5.c1.t">Batch training</span></h3>
+            <p data-i18n="s5.c1.p">Instead of updating after every single example, we average gradients over a "mini-batch"
               of examples (e.g., 64 at a time). This makes training faster and more stable.</p>
           </div>
           <div class="concept-card">
-            <h3><span class="card-color" style="background:var(--pink)"></span>Overfitting</h3>
-            <p>With enough training, the model memorizes the training text exactly. For our tiny model,
+            <h3><span class="card-color" style="background:var(--pink)"></span><span data-i18n="s5.c2.t">Overfitting</span></h3>
+            <p data-i18n="s5.c2.p">With enough training, the model memorizes the training text exactly. For our tiny model,
               this is expected! Real LLMs train on trillions of tokens to avoid this.</p>
           </div>
         </div>
@@ -233,14 +234,14 @@
 
       <!-- 6. Generation -->
       <section class="concept-section">
-        <h2><span class="step-num">6</span> Generation</h2>
-        <p>
+        <h2><span class="step-num">6</span> <span data-i18n="s6.title">Generation</span></h2>
+        <p data-i18n="s6.p">
           To generate text, we start with a seed and repeatedly predict the next token. Each prediction
           is <strong>sampled</strong> from the probability distribution — we don't always pick the most likely
           token. The <strong>temperature</strong> parameter controls randomness.
         </p>
         <div class="card" id="prediction-demo"></div>
-        <div class="math-block">
+        <div class="math-block" data-i18n="s6.math">
           <span class="comment">// Temperature controls randomness</span><br>
           scaled_logits = logits / temperature<br><br>
           temperature = 0.1 → almost always picks the top prediction (deterministic)<br>
@@ -249,7 +250,7 @@
         </div>
         <div style="text-align:center; margin-top:32px;">
           <button class="btn btn-primary nav-tab" data-page="lab" style="font-size:16px; padding:14px 32px;">
-            Try it yourself in the Lab →
+            <span data-i18n="s6.cta">Try it yourself in the Lab →</span>
           </button>
         </div>
       </section>
@@ -261,8 +262,8 @@
   <div id="page-lab" class="page">
     <div class="container">
 
-      <h1 style="font-size:28px; font-weight:700; margin-bottom:8px;">The Lab</h1>
-      <p style="color:var(--text-secondary); margin-bottom:32px;">
+      <h1 style="font-size:28px; font-weight:700; margin-bottom:8px;" data-i18n="lab.title">The Lab</h1>
+      <p style="color:var(--text-secondary); margin-bottom:32px;" data-i18n="lab.sub">
         Train your own tiny language model right in the browser. Add text, hit train, and watch it learn.
       </p>
 
@@ -270,32 +271,36 @@
       <div class="lab-step active" data-step="1" id="step-1">
         <div class="lab-step-header">
           <div class="step-indicator">1</div>
-          <h2>Training Data</h2>
+          <h2 data-i18n="lab.s1">Training Data</h2>
         </div>
         <div class="lab-step-content">
-          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:12px;">
+          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:12px;" data-i18n="lab.s1.p">
             Paste text, load a sample, or upload a .txt file. More text = better patterns to learn.
           </p>
 
           <div class="sample-buttons">
-            <button class="sample-btn" data-sample="1">Example #1</button>
-            <button class="sample-btn" data-sample="2">Example #2</button>
-            <button class="sample-btn" data-sample="3">Example #3</button>
+            <button class="sample-btn" data-sample="1" data-i18n="lab.ex1">Example #1</button>
+            <button class="sample-btn" data-sample="2" data-i18n="lab.ex2">Example #2</button>
+            <button class="sample-btn" data-sample="3" data-i18n="lab.ex3">Example #3</button>
+            <button class="sample-btn pt-only" data-sample="4" data-i18n="lab.ex4">Ring songs (long)</button>
+            <button class="sample-btn pt-only" data-sample="5" data-i18n="lab.ex5">Proverbs (long)</button>
+            <button class="sample-btn pt-only" data-sample="6" data-i18n="lab.ex6">Rhymes and tongue twisters (long)</button>
           </div>
+          <p class="sample-note pt-only" data-i18n="lab.longNote">The long texts show the other side: less copying and more made-up words. Raising the vocabulary size in the Tokenize step helps.</p>
 
           <div class="text-input-area">
-            <textarea id="training-text" placeholder="Paste or type your training text here..."></textarea>
+            <textarea id="training-text" data-i18n-placeholder="lab.textarea" placeholder="Paste or type your training text here..."></textarea>
           </div>
           <div id="text-stats"></div>
           <div class="upload-area">
             <label class="upload-btn" for="file-upload">
-              Upload .txt file
+              <span data-i18n="lab.upload">Upload .txt file</span>
             </label>
             <input type="file" id="file-upload" accept=".txt">
           </div>
 
           <div class="btn-row" style="margin-top:16px;">
-            <button class="btn btn-primary" id="btn-next-1">Next</button>
+            <button class="btn btn-primary" id="btn-next-1" data-i18n="lab.next">Next</button>
           </div>
         </div>
       </div>
@@ -304,16 +309,16 @@
       <div class="lab-step collapsed locked" data-step="2" id="step-2">
         <div class="lab-step-header">
           <div class="step-indicator">2</div>
-          <h2>Tokenize</h2>
+          <h2 data-i18n="lab.s2">Tokenize</h2>
         </div>
         <div class="lab-step-content">
-          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:12px;">
+          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:12px;" data-i18n="lab.s2.p">
             Run BPE tokenization on your text to build a vocabulary before training.
           </p>
 
           <div class="controls-row">
             <div class="control-group">
-              <label>Vocab Size <span class="label-unit">tokens</span></label>
+              <label data-i18n="lab.vocab">Vocab Size <span class="label-unit">tokens</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-vocab" min="50" max="300" step="10" value="150">
                 <span class="slider-val" id="val-vocab">150</span>
@@ -327,17 +332,17 @@
 
           <!-- Tokenization Visualization -->
           <div id="tokenization-viz" style="display:none">
-            <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;">Tokenization Result</h3>
-            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
+            <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;" data-i18n="lab.tokresult">Tokenization Result</h3>
+            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;" data-i18n="lab.tokresult.p">
               BPE learned these merge rules from your text. Hover over tokens to see their IDs.
             </p>
             <div id="token-viz-merges"></div>
-            <h3 style="margin-top:20px; margin-bottom:10px; font-size:15px; color:var(--text-secondary);">Tokenized Text (first 300 tokens)</h3>
+            <h3 style="margin-top:20px; margin-bottom:10px; font-size:15px; color:var(--text-secondary);" data-i18n="lab.tokentext">Tokenized Text (first 300 tokens)</h3>
             <div id="token-viz-text"></div>
           </div>
 
           <div class="btn-row" style="margin-top:16px;">
-            <button class="btn btn-primary" id="btn-next-2" style="display:none">Next</button>
+            <button class="btn btn-primary" id="btn-next-2" style="display:none" data-i18n="lab.next">Next</button>
           </div>
         </div>
       </div>
@@ -346,33 +351,33 @@
       <div class="lab-step collapsed locked" data-step="3" id="step-3">
         <div class="lab-step-header">
           <div class="step-indicator">3</div>
-          <h2>Train</h2>
+          <h2 data-i18n="lab.s3">Train</h2>
         </div>
         <div class="lab-step-content">
           <div class="controls-row">
             <div class="control-group">
-              <label>Embed Dims</label>
+              <label data-i18n="lab.embed">Embed Dims</label>
               <div class="slider-row">
                 <input type="range" id="slider-embed" min="8" max="64" step="4" value="8">
                 <span class="slider-val" id="val-embed">8</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Context Window <span class="label-unit">tokens</span></label>
+              <label data-i18n="lab.context">Context Window <span class="label-unit">tokens</span></label>
               <div class="slider-row">
-                <input type="range" id="slider-context" min="3" max="16" step="1" value="10">
-                <span class="slider-val" id="val-context">10</span>
+                <input type="range" id="slider-context" min="3" max="16" step="1" value="5">
+                <span class="slider-val" id="val-context">5</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Learning Rate</label>
+              <label data-i18n="lab.lr">Learning Rate</label>
               <div class="slider-row">
                 <input type="range" id="slider-lr" min="0.001" max="0.1" step="0.001" value="0.05">
                 <span class="slider-val" id="val-lr">0.050</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Training Speed <span class="label-unit">steps/frame</span></label>
+              <label data-i18n="lab.speed">Training Speed <span class="label-unit">steps/frame</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-speed" min="1" max="50" step="1" value="10">
                 <span class="slider-val" id="val-speed">10</span>
@@ -390,7 +395,7 @@
 
           <!-- Training Visualization -->
           <div id="training-viz">
-            <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;">Training Progress</h3>
+            <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;" data-i18n="lab.progress">Training Progress</h3>
             <div class="training-header">
               <span id="step-counter">Step: 0</span>
               <span id="loss-value">Loss: —</span>
@@ -398,17 +403,18 @@
 
             <div class="viz-grid">
               <div class="viz-panel">
-                <h4>Loss Over Time</h4>
+                <h4 data-i18n="lab.losschart">Loss Over Time</h4>
                 <canvas id="loss-canvas"></canvas>
+                <p class="viz-note" data-i18n="lab.lossNote">Compare loss only between runs with the same settings (tokenizer vocab size and context window). A different tokenizer splits the text into different tokens, so the numbers measure different things.</p>
               </div>
               <div class="viz-panel">
-                <h4>Token Embeddings (2D projection)</h4>
+                <h4 data-i18n="lab.embchart">Token Embeddings (2D projection)</h4>
                 <canvas id="embedding-canvas"></canvas>
               </div>
             </div>
 
             <div class="viz-panel">
-              <h4>Live Predictions</h4>
+              <h4 data-i18n="lab.live">Live Predictions</h4>
               <div id="live-predictions"></div>
             </div>
           </div>
@@ -418,10 +424,10 @@
               <span class="btn-icon">&#9632;</span> Pause
             </button>
             <button class="btn btn-secondary" id="btn-reset" style="display:none">
-              Reset
+              <span data-i18n="lab.reset">Reset</span>
             </button>
             <button class="btn btn-primary" id="btn-generate-step" style="display:none">
-              Generate →
+              <span data-i18n="lab.genstep">Generate →</span>
             </button>
           </div>
         </div>
@@ -431,45 +437,45 @@
       <div class="lab-step collapsed locked" data-step="4" id="step-4">
         <div class="lab-step-header">
           <div class="step-indicator">4</div>
-          <h2>Generate Text</h2>
+          <h2 data-i18n="lab.s4">Generate Text</h2>
         </div>
         <div class="lab-step-content">
-          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
+          <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;" data-i18n="lab.s4.p">
             Enter a seed prompt and watch the model generate text token by token.
             Opacity reflects confidence.
           </p>
 
           <div class="controls-row" style="margin-bottom:16px;">
             <div class="control-group">
-              <label>Temperature</label>
+              <label data-i18n="lab.temp">Temperature</label>
               <div class="slider-row">
                 <input type="range" id="slider-temp" min="0.1" max="2.0" step="0.05" value="0.3">
                 <span class="slider-val" id="val-temp">0.30</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Top-K <span class="label-unit">(0 = off)</span></label>
+              <label data-i18n="lab.topk">Top-K <span class="label-unit">(0 = off)</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-topk" min="0" max="50" step="1" value="5">
                 <span class="slider-val" id="val-topk">5</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Top-P <span class="label-unit">(1.0 = off)</span></label>
+              <label data-i18n="lab.topp">Top-P <span class="label-unit">(1.0 = off)</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-topp" min="0" max="1.0" step="0.05" value="0.5">
                 <span class="slider-val" id="val-topp">0.50</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Rep. Penalty <span class="label-unit">(1.0 = off)</span></label>
+              <label data-i18n="lab.reppen">Rep. Penalty <span class="label-unit">(1.0 = off)</span></label>
               <div class="slider-row">
-                <input type="range" id="slider-reppen" min="1.0" max="2.0" step="0.05" value="1.5">
-                <span class="slider-val" id="val-reppen">1.50</span>
+                <input type="range" id="slider-reppen" min="1.0" max="2.0" step="0.05" value="1.2">
+                <span class="slider-val" id="val-reppen">1.20</span>
               </div>
             </div>
             <div class="control-group">
-              <label>Length <span class="label-unit">tokens</span></label>
+              <label data-i18n="lab.length">Length <span class="label-unit">tokens</span></label>
               <div class="slider-row">
                 <input type="range" id="slider-length" min="10" max="200" step="5" value="80">
                 <span class="slider-val" id="val-length">80</span>
@@ -478,16 +484,23 @@
           </div>
 
           <div class="gen-input-row">
-            <input type="text" id="prompt-input" placeholder="Type a seed prompt (e.g. &quot;The &quot;)...">
-            <button class="btn btn-primary" id="btn-generate">Generate</button>
+            <input type="text" id="prompt-input" data-i18n-placeholder="lab.prompt" placeholder="Type a seed prompt (e.g. &quot;The &quot;)...">
+            <button class="btn btn-primary" id="btn-generate" data-i18n="lab.generate">Generate</button>
           </div>
 
           <div id="generation-output"></div>
+          <div id="copy-meter" style="display:none;">
+            <span class="copy-meter-label" data-i18n="lab.copyLabel">Copied from training text</span>
+            <div class="copy-meter-track"><div id="copy-meter-fill" class="copy-meter-fill"></div></div>
+            <span id="copy-meter-value" class="copy-meter-value">—</span>
+            <span id="copy-meter-detail" class="copy-meter-detail"></span>
+            <span class="copy-meter-legend" data-i18n="lab.copyLegend"><span class="gen-copied">highlighted</span> = 3 or more words in a row that also appear in the training text</span>
+          </div>
           <div id="generation-steps-viz"></div>
 
           <div class="btn-row" style="margin-top:16px;">
             <button class="btn btn-secondary" id="btn-back-train">
-              <span class="btn-icon">&#9654;</span> Back to Training
+              <span class="btn-icon">&#9654;</span> <span data-i18n="lab.back">Back to Training</span>
             </button>
           </div>
         </div>
@@ -496,9 +509,11 @@
     </div>
   </div>
 
+  <script src="js/i18n.js"></script>
   <script src="js/tokenizer.js"></script>
   <script src="js/model.js"></script>
   <script src="js/samples.js"></script>
+  <script src="js/copycheck.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

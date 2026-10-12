@@ -12,10 +12,41 @@ const app = {
 
   init() {
     this.model = new MiniLM();
+    applyI18n();
     this.bindEvents();
     this.showPage('learn');
     this.initLearnDemos();
     this.updateStepStates();
+  },
+
+  // Re-render everything that is built in JavaScript after a language switch.
+  onLangChange() {
+    this.initLearnDemos();
+    // Counters keep their numbers; only the words change.
+    if (this.lastResult) this.updateTrainingViz(this.lastResult);
+    else {
+      document.getElementById('step-counter').textContent = t('js.step', { n: 0 });
+      document.getElementById('loss-value').textContent = t('js.lossEmpty');
+    }
+    if (document.getElementById('training-text').value) this.updateTextStats();
+    if (!this.training && document.getElementById('btn-train').style.display !== 'none') {
+      document.getElementById('btn-train').innerHTML = `<span class="btn-icon">&#9654;</span> ${t('js.trainModel')}`;
+    }
+    const pause = document.getElementById('btn-pause');
+    if (pause.style.display !== 'none') {
+      pause.innerHTML = this.training ? `<span class="btn-icon">&#9632;</span> ${t('js.pause')}` : `<span class="btn-icon">&#9654;</span> ${t('js.resume')}`;
+    }
+    const tokBtn = document.getElementById('btn-tokenize');
+    tokBtn.textContent = this.model && this.model.tokenizer ? t('js.retokenize') : t('js.tokenize');
+    if (this.model && this.model.tokenizer) {
+      this.showTokenInfo({
+        vocabSize: this.model.vocabSize,
+        numMerges: this.model.tokenizer.merges.length,
+        compressionRatio: this.model.rawTokenIds ? (document.getElementById('training-text').value.length / this.model.rawTokenIds.length).toFixed(1) : '—',
+      });
+      this.updateTrainingPreview();
+    }
+    this.showCopyDetail();
   },
 
   // --- Navigation ---
@@ -71,7 +102,7 @@ const app = {
     document.getElementById('btn-next-1').addEventListener('click', () => {
       const text = document.getElementById('training-text').value.trim();
       if (text.length < 20) {
-        alert('Please enter at least 20 characters of training text.');
+        alert(t('js.minChars'));
         return;
       }
       this.goToStep(2, true);
@@ -153,13 +184,28 @@ const app = {
     const container = document.getElementById('tokenization-demo');
     if (!container) return;
 
-    // Show BPE merge process on example text
-    const text = "the cat sat on the mat";
+    // Show BPE merge process on example text. The merges are the real ones
+    // the tokenizer makes on each sentence (pairs that appear at least twice).
+    const demo = LANG === 'pt' ? {
+      text: 'o gato e o pato no prato',
+      steps: [
+        { pair: ['a', 't'], result: 'at', tokens: ['o', '␣', 'g', 'at', 'o', '␣', 'e', '␣', 'o', '␣', 'p', 'at', 'o', '␣', 'n', 'o', '␣', 'p', 'r', 'at', 'o'] },
+        { pair: ['at', 'o'], result: 'ato', tokens: ['o', '␣', 'g', 'ato', '␣', 'e', '␣', 'o', '␣', 'p', 'ato', '␣', 'n', 'o', '␣', 'p', 'r', 'ato'] },
+      ],
+    } : {
+      text: 'the cat sat on the mat',
+      steps: [
+        { pair: ['a', 't'], result: 'at', tokens: ['t', 'h', 'e', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 't', 'h', 'e', '␣', 'm', 'at'] },
+        { pair: ['t', 'h'], result: 'th', tokens: ['th', 'e', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 'th', 'e', '␣', 'm', 'at'] },
+        { pair: ['th', 'e'], result: 'the', tokens: ['the', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 'the', '␣', 'm', 'at'] },
+      ],
+    };
+    const text = demo.text;
     const charTokens = text.split('');
 
-    let html = '<div class="demo-label">Input text:</div>';
+    let html = `<div class="demo-label">${t('demo.inputText')}</div>`;
     html += `<div class="demo-text-display">"${text}"</div>`;
-    html += '<div class="demo-arrow">Step 1: Split into characters</div>';
+    html += `<div class="demo-arrow">${t('demo.split')}</div>`;
     html += '<div class="token-grid">';
     for (const ch of charTokens) {
       const display = ch === ' ' ? '␣' : ch;
@@ -167,26 +213,18 @@ const app = {
     }
     html += '</div>';
 
-    // Show merge steps
-    const mergeSteps = [
-      { pair: ['a', 't'], result: 'at', tokens: ['t', 'h', 'e', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 't', 'h', 'e', '␣', 'm', 'at'] },
-      { pair: ['t', 'h'], result: 'th', tokens: ['th', 'e', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 'th', 'e', '␣', 'm', 'at'] },
-      { pair: ['th', 'e'], result: 'the', tokens: ['the', '␣', 'c', 'at', '␣', 's', 'at', '␣', 'o', 'n', '␣', 'the', '␣', 'm', 'at'] },
-    ];
-
-    for (let s = 0; s < mergeSteps.length; s++) {
-      const step = mergeSteps[s];
-      html += `<div class="demo-arrow">Merge "${step.pair[0]}" + "${step.pair[1]}" → "${step.result}" (most frequent pair)</div>`;
+    for (const step of demo.steps) {
+      html += `<div class="demo-arrow">${t('demo.merge', { a: step.pair[0], b: step.pair[1], r: step.result })}</div>`;
       html += '<div class="token-grid">';
       for (const tok of step.tokens) {
-        const display = tok === '␣' ? '␣' : tok;
         const isMerged = tok === step.result;
-        html += `<div class="token-cell ${isMerged ? 'token-merged' : ''}"><span class="token-char">${display}</span></div>`;
+        html += `<div class="token-cell ${isMerged ? 'token-merged' : ''}"><span class="token-char">${tok}</span></div>`;
       }
       html += '</div>';
     }
 
-    html += '<div class="merge-summary">22 characters → 15 tokens (1.5x compression)</div>';
+    const finalCount = demo.steps[demo.steps.length - 1].tokens.length;
+    html += `<div class="merge-summary">${t('demo.summary', { chars: text.length, tokens: finalCount, ratio: (text.length / finalCount).toFixed(1) })}</div>`;
     container.innerHTML = html;
   },
 
@@ -194,8 +232,16 @@ const app = {
     const container = document.getElementById('prediction-demo');
     if (!container) return;
 
-    const contextTokens = ['the', ' ', 'ca'];
-    const predictions = [
+    const contextTokens = LANG === 'pt' ? ['o', ' ', 'ga'] : ['the', ' ', 'ca'];
+    const predictions = LANG === 'pt' ? [
+      { token: 'to', prob: 0.42 },
+      { token: 't', prob: 0.18 },
+      { token: 'l', prob: 0.15 },
+      { token: 'r', prob: 0.10 },
+      { token: 'nh', prob: 0.06 },
+      { token: 'ma', prob: 0.05 },
+      { token: 's', prob: 0.04 },
+    ] : [
       { token: 't', prob: 0.42 },
       { token: 'ts', prob: 0.18 },
       { token: 'r', prob: 0.15 },
@@ -205,7 +251,7 @@ const app = {
       { token: 'se', prob: 0.04 },
     ];
 
-    let html = '<div class="demo-label">Context tokens:</div>';
+    let html = `<div class="demo-label">${t('demo.contextTokens')}</div>`;
     html += '<div class="context-display">';
     for (const tok of contextTokens) {
       const display = tok === ' ' ? '␣' : tok;
@@ -213,7 +259,7 @@ const app = {
     }
     html += '<span class="ctx-char ctx-next">?</span>';
     html += '</div>';
-    html += '<div class="demo-arrow">Neural Network Prediction</div>';
+    html += `<div class="demo-arrow">${t('demo.nnPrediction')}</div>`;
     html += '<div class="prob-bars">';
     for (const p of predictions) {
       const pct = (p.prob * 100).toFixed(1);
@@ -239,7 +285,7 @@ const app = {
     if (step < this.currentStep && !skipWarning) {
       // No warning needed for 4→3 toggle
       if (!(this.currentStep === 4 && step === 3)) {
-        if (!confirm('Going back will reset steps after this one. Continue?')) return;
+        if (!confirm(t('js.goBack'))) return;
       }
     }
 
@@ -283,11 +329,12 @@ const app = {
   },
 
   clearTrainingUI() {
+    this.lastResult = null;
     document.getElementById('training-viz').classList.remove('active');
     document.getElementById('model-info').innerHTML = '';
     document.getElementById('slider-embed').disabled = false;
     document.getElementById('slider-context').disabled = false;
-    document.getElementById('btn-train').innerHTML = '<span class="btn-icon">&#9654;</span> Train Model';
+    document.getElementById('btn-train').innerHTML = `<span class="btn-icon">&#9654;</span> ${t('js.trainModel')}`;
     document.getElementById('btn-train').style.display = 'inline-flex';
     document.getElementById('btn-pause').style.display = 'none';
     document.getElementById('btn-reset').style.display = 'none';
@@ -297,8 +344,8 @@ const app = {
       if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
     });
     document.getElementById('live-predictions').innerHTML = '';
-    document.getElementById('step-counter').textContent = 'Step: 0';
-    document.getElementById('loss-value').textContent = 'Loss: —';
+    document.getElementById('step-counter').textContent = t('js.step', { n: 0 });
+    document.getElementById('loss-value').textContent = t('js.lossEmpty');
     document.getElementById('generation-output').innerHTML = '';
     document.getElementById('generation-steps-viz').innerHTML = '';
   },
@@ -306,7 +353,7 @@ const app = {
   clearTokenizationUI() {
     document.getElementById('tokenization-viz').style.display = 'none';
     document.getElementById('btn-tokenize').disabled = false;
-    document.getElementById('btn-tokenize').textContent = 'Tokenize';
+    document.getElementById('btn-tokenize').textContent = t('js.tokenize');
     document.getElementById('btn-next-2').style.display = 'none';
   },
 
@@ -318,11 +365,12 @@ const app = {
     const unique = new Set(text).size;
     const words = text.split(/\s+/).filter(w => w.length > 0).length;
     document.getElementById('text-stats').innerHTML =
-      `${chars.toLocaleString()} characters &middot; ${words.toLocaleString()} words &middot; ${unique} unique chars`;
+      t('js.textStats', { chars: chars.toLocaleString(LANG === 'pt' ? 'pt-BR' : undefined), words: words.toLocaleString(LANG === 'pt' ? 'pt-BR' : undefined), unique });
   },
 
   loadSample(name) {
-    const text = SAMPLES[name] || '';
+    const set = LANG === 'pt' && typeof SAMPLES_PT !== 'undefined' ? SAMPLES_PT : SAMPLES;
+    const text = set[name] || SAMPLES[name] || '';
     document.getElementById('training-text').value = text;
     this.updateTextStats();
   },
@@ -332,7 +380,7 @@ const app = {
   tokenizeText() {
     const text = document.getElementById('training-text').value.trim();
     if (text.length < 20) {
-      alert('Please enter at least 20 characters of training text.');
+      alert(t('js.minChars'));
       return;
     }
 
@@ -340,11 +388,14 @@ const app = {
     this.model = new MiniLM();
     const vocabSize = parseInt(document.getElementById('slider-vocab').value);
     const info = this.model.tokenize(text, vocabSize);
+    // Remember the exact text the model learns from, to spot copied output later
+    this.trainingText = text;
+    this.copyIndex = null;
     this.showTokenInfo(info);
     this.showTokenizationViz(text);
 
     // Allow re-tokenizing, show Next
-    document.getElementById('btn-tokenize').textContent = 'Re-tokenize';
+    document.getElementById('btn-tokenize').textContent = t('js.retokenize');
     document.getElementById('btn-next-2').style.display = 'inline-flex';
   },
 
@@ -352,7 +403,7 @@ const app = {
 
   startTraining() {
     if (!this.model.tokenizer) {
-      alert('Please tokenize the text first!');
+      alert(t('js.tokenizeFirst'));
       return;
     }
 
@@ -362,7 +413,7 @@ const app = {
       this.model.learningRate = parseFloat(document.getElementById('slider-lr').value);
       const result = this.model.buildTrainingData();
       if (!result) {
-        alert('Text is too short to create training examples. Please provide more text.');
+        alert(t('js.tooShort'));
         return;
       }
       this.showTrainingInfo(result);
@@ -374,7 +425,7 @@ const app = {
     document.getElementById('btn-train').style.display = 'none';
     const btnPause = document.getElementById('btn-pause');
     btnPause.style.display = 'inline-flex';
-    btnPause.innerHTML = '<span class="btn-icon">&#9632;</span> Pause';
+    btnPause.innerHTML = `<span class="btn-icon">&#9632;</span> ${t('js.pause')}`;
     btnPause.classList.remove('btn-success');
     btnPause.classList.add('btn-danger');
     document.getElementById('btn-reset').style.display = 'inline-flex';
@@ -402,17 +453,18 @@ const app = {
     this.model.trained = true;
     if (this.trainTimer) cancelAnimationFrame(this.trainTimer);
     const btnPause = document.getElementById('btn-pause');
-    btnPause.innerHTML = '<span class="btn-icon">&#9654;</span> Resume';
+    btnPause.innerHTML = `<span class="btn-icon">&#9654;</span> ${t('js.resume')}`;
     btnPause.classList.remove('btn-danger');
     btnPause.classList.add('btn-success');
   },
 
   resetModel() {
+    this.lastResult = null;
     this.stopTraining();
 
     // Clear training viz
     document.getElementById('training-viz').classList.remove('active');
-    document.getElementById('btn-train').innerHTML = '<span class="btn-icon">&#9654;</span> Train Model';
+    document.getElementById('btn-train').innerHTML = `<span class="btn-icon">&#9654;</span> ${t('js.trainModel')}`;
     document.getElementById('btn-train').style.display = 'inline-flex';
     document.getElementById('btn-pause').style.display = 'none';
     document.getElementById('btn-reset').style.display = 'none';
@@ -422,8 +474,8 @@ const app = {
       if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
     });
     document.getElementById('live-predictions').innerHTML = '';
-    document.getElementById('step-counter').textContent = 'Step: 0';
-    document.getElementById('loss-value').textContent = 'Loss: —';
+    document.getElementById('step-counter').textContent = t('js.step', { n: 0 });
+    document.getElementById('loss-value').textContent = t('js.lossEmpty');
     document.getElementById('generation-output').innerHTML = '';
     document.getElementById('generation-steps-viz').innerHTML = '';
 
@@ -452,11 +504,11 @@ const app = {
     document.getElementById('model-info').innerHTML = `
       <div class="info-grid">
         <div class="info-item">
-          <div class="info-label">Vocabulary</div>
-          <div class="info-value">${info.vocabSize} tokens (${info.numMerges} merges)</div>
+          <div class="info-label">${t('js.vocabulary')}</div>
+          <div class="info-value">${t('js.vocabValue', { size: info.vocabSize, merges: info.numMerges })}</div>
         </div>
         <div class="info-item">
-          <div class="info-label">Compression</div>
+          <div class="info-label">${t('js.compression')}</div>
           <div class="info-value">${info.compressionRatio}x</div>
         </div>
       </div>
@@ -490,12 +542,12 @@ const app = {
     div.innerHTML = `
       <div class="info-grid" style="margin-top:8px;">
         <div class="info-item">
-          <div class="info-label">Training examples</div>
-          <div class="info-value">${numExamples.toLocaleString()}</div>
+          <div class="info-label">${t('js.trainingExamples')}</div>
+          <div class="info-value">${numExamples.toLocaleString(LANG === 'pt' ? 'pt-BR' : undefined)}</div>
         </div>
         <div class="info-item">
-          <div class="info-label">Parameters</div>
-          <div class="info-value">${paramCount.toLocaleString()}</div>
+          <div class="info-label">${t('js.parameters')}</div>
+          <div class="info-value">${paramCount.toLocaleString(LANG === 'pt' ? 'pt-BR' : undefined)}</div>
         </div>
       </div>
     `;
@@ -525,7 +577,7 @@ const app = {
       </div>`;
     }
     if (tok.merges.length > 20) {
-      mergesHtml += `<div class="merge-rule" style="color:var(--text-muted)">... and ${tok.merges.length - 20} more merges</div>`;
+      mergesHtml += `<div class="merge-rule" style="color:var(--text-muted)">${t('js.moreMerges', { n: tok.merges.length - 20 })}</div>`;
     }
     mergesHtml += '</div>';
     mergesContainer.innerHTML = mergesHtml;
@@ -547,7 +599,7 @@ const app = {
       textHtml += `<span class="token-pill ${colorClass}" title="ID: ${id}, token: &quot;${this.escapeHtml(token)}&quot;">${this.escapeHtml(display)}</span>`;
     }
     if (tokenIds.length > 300) {
-      textHtml += `<span class="token-pill" style="opacity:0.4">... ${tokenIds.length - 300} more</span>`;
+      textHtml += `<span class="token-pill" style="opacity:0.4">${t('js.moreTokens', { n: tokenIds.length - 300 })}</span>`;
     }
     textHtml += '</div>';
     textContainer.innerHTML = textHtml;
@@ -556,8 +608,9 @@ const app = {
   // --- Visualization ---
 
   updateTrainingViz(result) {
-    document.getElementById('step-counter').textContent = `Step: ${result.step.toLocaleString()}`;
-    document.getElementById('loss-value').textContent = `Loss: ${result.avgLoss.toFixed(4)} · LR: ${result.effectiveLR.toFixed(4)}`;
+    this.lastResult = result;
+    document.getElementById('step-counter').textContent = t('js.step', { n: result.step.toLocaleString(LANG === 'pt' ? 'pt-BR' : undefined) });
+    document.getElementById('loss-value').textContent = t('js.loss', { loss: result.avgLoss.toFixed(4), lr: result.effectiveLR.toFixed(4) });
 
     this.drawLossChart();
     this.drawPredictions(result);
@@ -624,7 +677,7 @@ const app = {
       ctx.fillText(val.toFixed(2), pad.left - 8, y + 4);
     }
     ctx.textAlign = 'center';
-    ctx.fillText('Training Steps', W / 2, H - 4);
+    ctx.fillText(t('js.trainingSteps'), W / 2, H - 4);
 
     ctx.beginPath();
     ctx.strokeStyle = '#4f8ff7';
@@ -652,7 +705,7 @@ const app = {
     const container = document.getElementById('live-predictions');
     const ctxDisplay = result.contextTokens.map(t => this.displayToken(t)).join(' | ');
     const targetDisplay = this.displayToken(result.targetToken);
-    let html = `<div class="pred-context">Context: <span class="mono">${this.escapeHtml(ctxDisplay)}</span> → Target: <span class="mono">"${this.escapeHtml(targetDisplay)}"</span></div>`;
+    let html = `<div class="pred-context">${t('js.context')}: <span class="mono">${this.escapeHtml(ctxDisplay)}</span> → ${t('js.target')}: <span class="mono">"${this.escapeHtml(targetDisplay)}"</span></div>`;
     html += '<div class="pred-bars">';
     for (const p of result.topPredictions.slice(0, 8)) {
       const pct = (p.prob * 100).toFixed(1);
@@ -719,8 +772,8 @@ const app = {
 
   tokenColor(token) {
     if (token.length === 1) {
-      if (/[a-z]/.test(token)) return '#4f8ff7';
-      if (/[A-Z]/.test(token)) return '#7c5ff7';
+      if (/\p{Ll}/u.test(token)) return '#4f8ff7';
+      if (/\p{Lu}/u.test(token)) return '#7c5ff7';
       if (/[0-9]/.test(token)) return '#f7a84f';
       if (/\s/.test(token)) return '#4fc78f';
       return '#f75f8a';
@@ -750,19 +803,26 @@ const app = {
     const length = parseInt(document.getElementById('slider-length').value);
 
     if (!this.model.C) {
-      alert('Please train the model first!');
+      alert(t('js.trainFirst'));
       return;
     }
 
-    const { text, steps } = this.model.generate(seed, length, temp, topK, topP, repPen);
+    const { steps, seed: usedSeed } = this.model.generate(seed, length, temp, topK, topP, repPen);
 
     const output = document.getElementById('generation-output');
     output.innerHTML = '';
 
+    // Copy detection: index the training text once per tokenization
+    if (!this.copyIndex && this.trainingText) {
+      this.copyIndex = CopyCheck.buildIndex(this.trainingText);
+    }
+    let fullText = usedSeed;
+    const tokenSpans = [];
+
     // Show seed
     const seedSpan = document.createElement('span');
     seedSpan.className = 'gen-seed';
-    seedSpan.textContent = seed;
+    seedSpan.textContent = usedSeed;
     output.appendChild(seedSpan);
 
     // Animate token by token
@@ -778,23 +838,53 @@ const app = {
       span.className = 'gen-token';
       span.textContent = step.selected;
       span.style.opacity = 0.4 + step.selectedProb * 0.6;
-      span.title = `"${step.selected}" (${(step.selectedProb * 100).toFixed(1)}% confidence)`;
+      span.title = `"${step.selected}" (${t('js.confidence', { p: (step.selectedProb * 100).toFixed(1) })})`;
       output.appendChild(span);
+      tokenSpans.push({ span, start: fullText.length, end: fullText.length + step.selected.length });
+      fullText += step.selected;
       tokenIdx++;
+      this.markCopied(fullText, usedSeed.length, tokenSpans, tokenIdx < steps.length);
       if (tokenIdx < steps.length) {
         setTimeout(typeToken, 40);
       } else {
         this.showGenerationSteps(steps);
       }
     };
+    this.markCopied(fullText, usedSeed.length, tokenSpans, steps.length > 0);
     typeToken();
+  },
+
+  // Highlight generated tokens that belong to a run of 3+ words found in the
+  // training text, and update the "% copied" meter. Runs after every token,
+  // so it also works while the output is still being typed out.
+  markCopied(fullText, genStart, tokenSpans, partial) {
+    const meter = document.getElementById('copy-meter');
+    if (!this.copyIndex) {
+      meter.style.display = 'none';
+      return;
+    }
+    const res = CopyCheck.analyze(this.copyIndex, fullText, genStart, partial);
+    for (const ts of tokenSpans) {
+      ts.span.classList.toggle('gen-copied', CopyCheck.overlaps(res.ranges, ts.start, ts.end));
+    }
+    meter.style.display = 'flex';
+    document.getElementById('copy-meter-value').textContent = res.totalWords ? `${res.pct}%` : '—';
+    document.getElementById('copy-meter-fill').style.width = `${res.pct}%`;
+    this.lastCopy = res;
+    this.showCopyDetail();
+  },
+
+  showCopyDetail() {
+    if (!this.lastCopy) return;
+    document.getElementById('copy-meter-detail').textContent =
+      t('js.copyDetail', { copied: this.lastCopy.copiedWords, total: this.lastCopy.totalWords });
   },
 
   showGenerationSteps(steps) {
     const container = document.getElementById('generation-steps-viz');
     if (steps.length === 0) return;
 
-    let html = '<h4>Generation Steps</h4>';
+    let html = `<h4>${t('js.generationSteps')}</h4>`;
     html += '<div class="gen-steps-scroll">';
     for (let i = 0; i < Math.min(steps.length, 50); i++) {
       const s = steps[i];
