@@ -803,7 +803,7 @@ const app = {
       return;
     }
 
-    const { text, steps } = this.model.generate(seed, length, temp, topK, topP, repPen);
+    const { steps, seed: usedSeed } = this.model.generate(seed, length, temp, topK, topP, repPen);
 
     const output = document.getElementById('generation-output');
     output.innerHTML = '';
@@ -811,7 +811,7 @@ const app = {
     // Show seed
     const seedSpan = document.createElement('span');
     seedSpan.className = 'gen-seed';
-    seedSpan.textContent = seed;
+    seedSpan.textContent = usedSeed;
     output.appendChild(seedSpan);
 
     // Animate token by token

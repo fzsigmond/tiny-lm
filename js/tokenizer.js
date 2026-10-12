@@ -1,7 +1,8 @@
 // ============================================================
 // BPE (Byte Pair Encoding) Tokenizer
 // Learns sub-word tokens from training text by iteratively
-// merging the most frequent adjacent pairs.
+// merging the most frequent adjacent pairs. Like GPT-2, the text
+// is first split into words, so merges never cross a word boundary.
 // ============================================================
 
 class BPETokenizer {
@@ -41,21 +42,23 @@ class BPETokenizer {
 
     let nextId = chars.length + this.NUM_SPECIAL;
 
-    // Step 2: Convert text to character-level token IDs
-    let tokens = [];
-    for (let i = 0; i < text.length; i++) {
-      tokens.push(this.tokenToId[text[i]]);
-    }
+    // Step 2: Pre-tokenize into word chunks (like GPT-2), then convert each
+    // chunk to character-level token IDs. Merges never cross chunk borders,
+    // so a token can be part of a word, but never the end of one word glued
+    // to the start of the next.
+    let words = this._splitWords(text).map(w => [...w].map(ch => this.tokenToId[ch]));
 
     // Step 3: Iterative merging
     this.merges = [];
 
     while (nextId < maxVocabSize) {
-      // Count all adjacent pairs
+      // Count adjacent pairs inside each word chunk
       const pairCounts = {};
-      for (let i = 0; i < tokens.length - 1; i++) {
-        const key = tokens[i] + ',' + tokens[i + 1];
-        pairCounts[key] = (pairCounts[key] || 0) + 1;
+      for (const w of words) {
+        for (let i = 0; i < w.length - 1; i++) {
+          const key = w[i] + ',' + w[i + 1];
+          pairCounts[key] = (pairCounts[key] || 0) + 1;
+        }
       }
 
       // Find most frequent pair
@@ -81,11 +84,13 @@ class BPETokenizer {
 
       this.merges.push({ a, b, newId: nextId });
 
-      // Replace all occurrences of (a, b) with newId in token sequence
-      tokens = this._replacePair(tokens, a, b, nextId);
+      // Replace all occurrences of (a, b) with newId inside each chunk
+      words = words.map(w => this._replacePair(w, a, b, nextId));
 
       nextId++;
     }
+
+    const tokens = words.flat();
 
     this.vocabSize = nextId;
 
@@ -116,19 +121,27 @@ class BPETokenizer {
 
   // --- Encode new text using learned merges ---
   encode(text) {
-    // Convert to character-level IDs
-    let tokens = [];
-    for (let i = 0; i < text.length; i++) {
-      const id = this.tokenToId[text[i]];
-      tokens.push(id !== undefined ? id : this.UNK_ID);
+    const tokens = [];
+    for (const word of this._splitWords(text)) {
+      // Convert to character-level IDs
+      let w = [];
+      for (const ch of word) {
+        const id = this.tokenToId[ch];
+        w.push(id !== undefined ? id : this.UNK_ID);
+      }
+      // Replay merges in order, inside the chunk
+      for (const merge of this.merges) {
+        w = this._replacePair(w, merge.a, merge.b, merge.newId);
+      }
+      tokens.push(...w);
     }
-
-    // Replay merges in order
-    for (const merge of this.merges) {
-      tokens = this._replacePair(tokens, merge.a, merge.b, merge.newId);
-    }
-
     return tokens;
+  }
+
+  // Split text into chunks: a word with its leading space (" cat"),
+  // a number, a run of punctuation, or whitespace. BPE merges stay inside a chunk.
+  _splitWords(text) {
+    return text.match(/ ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+/gu) || [];
   }
 
   // --- Decode token IDs back to text ---

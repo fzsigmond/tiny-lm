@@ -8,7 +8,7 @@
 
 class MiniLM {
   constructor(config = {}) {
-    this.blockSize = config.blockSize || 10;
+    this.blockSize = config.blockSize || 5;
     this.embedDim = config.embedDim || 8;
     this.hiddenSize = config.hiddenSize || 128;
     this.learningRate = config.learningRate || 0.05;
@@ -368,10 +368,14 @@ class MiniLM {
   // --- Text generation ---
 
   generate(seed, length, temperature = 0.8, topK = 0, topP = 0, repetitionPenalty = 1.0) {
-    if (!this.C || !this.tokenizer) return { text: seed, steps: [] };
+    if (!this.C || !this.tokenizer) return { text: seed, steps: [], seed };
 
     const { blockSize, embedDim, hiddenSize, vocabSize } = this;
     const flatSize = blockSize * embedDim;
+
+    // Words carry their leading space (" cat"), so a trailing space in the
+    // seed would be a lone token the model never saw in training: drop it
+    seed = seed.replace(/ +$/, '');
 
     // Tokenize the seed
     let seedTokens = seed ? this.tokenizer.encode(seed) : [];
@@ -522,7 +526,7 @@ class MiniLM {
       context = newCtx;
     }
 
-    return { text: result, steps };
+    return { text: result, steps, seed };
   }
 
   // Get 2D embedding projection for top tokens

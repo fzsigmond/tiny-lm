@@ -151,7 +151,7 @@
           </div>
           <div class="concept-card">
             <h3><span class="card-color" style="background:var(--purple)"></span><span data-i18n="s3.c3.t">Context window</span></h3>
-            <p data-i18n="s3.c3.p">The model looks at several tokens at once (a "context window" of 10 tokens in our case).
+            <p data-i18n="s3.c3.p">The model looks at several tokens at once (a "context window" of 5 tokens in our case).
               It concatenates their embeddings into one long vector, giving the neural network a
               complete picture of the recent context.</p>
           </div>
@@ -163,9 +163,9 @@
           <span class="comment">// Example: token "the" has ID 42</span><br>
           <span class="comment">// Its embedding is row 42 of the table — a vector of 8 numbers</span><br>
           C[42] = [0.23, -0.71, 0.45, 0.12, ...]<br><br>
-          <span class="comment">// To feed 10 tokens into the network, concatenate their embeddings</span><br>
-          input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4], ...)<br>
-          <span class="comment">// Result: a single vector of 10 × 8 = 80 numbers</span>
+          <span class="comment">// To feed 5 tokens into the network, concatenate their embeddings</span><br>
+          input = concat(C[tok_0], C[tok_1], C[tok_2], C[tok_3], C[tok_4])<br>
+          <span class="comment">// Result: a single vector of 5 × 8 = 40 numbers</span>
         </div>
       </section>
 
@@ -179,9 +179,9 @@
         </p>
         <div class="card">
           <div class="architecture-diagram">
-            <div class="arch-block input" data-i18n="s4.a1">Input<br><small>10 tokens</small></div>
+            <div class="arch-block input" data-i18n="s4.a1">Input<br><small>5 tokens</small></div>
             <span class="arch-arrow">→</span>
-            <div class="arch-block embed" data-i18n="s4.a2">Embeddings<br><small>10 × 8 = 80</small></div>
+            <div class="arch-block embed" data-i18n="s4.a2">Embeddings<br><small>5 × 8 = 40</small></div>
             <span class="arch-arrow">→</span>
             <div class="arch-block hidden" data-i18n="s4.a3">Hidden Layer<br><small>128 neurons, tanh</small></div>
             <span class="arch-arrow">→</span>
@@ -202,7 +202,7 @@
       <section class="concept-section">
         <h2><span class="step-num">5</span> <span data-i18n="s5.title">Training</span></h2>
         <p data-i18n="s5.p">
-          Training is how the model learns. We show it examples from the text: "given these 10 tokens,
+          Training is how the model learns. We show it examples from the text: "given these 5 tokens,
           the next one should be X." The model makes a prediction, we measure how wrong it was (the <strong>loss</strong>),
           and then nudge all the parameters slightly to make a better prediction next time. This is called
           <strong>gradient descent</strong>.
@@ -361,8 +361,8 @@
             <div class="control-group">
               <label data-i18n="lab.context">Context Window <span class="label-unit">tokens</span></label>
               <div class="slider-row">
-                <input type="range" id="slider-context" min="3" max="16" step="1" value="10">
-                <span class="slider-val" id="val-context">10</span>
+                <input type="range" id="slider-context" min="3" max="16" step="1" value="5">
+                <span class="slider-val" id="val-context">5</span>
               </div>
             </div>
             <div class="control-group">
@@ -465,8 +465,8 @@
             <div class="control-group">
               <label data-i18n="lab.reppen">Rep. Penalty <span class="label-unit">(1.0 = off)</span></label>
               <div class="slider-row">
-                <input type="range" id="slider-reppen" min="1.0" max="2.0" step="0.05" value="1.5">
-                <span class="slider-val" id="val-reppen">1.50</span>
+                <input type="range" id="slider-reppen" min="1.0" max="2.0" step="0.05" value="1.2">
+                <span class="slider-val" id="val-reppen">1.20</span>
               </div>
             </div>
             <div class="control-group">
