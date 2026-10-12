@@ -593,3 +593,159 @@ there is a fence by the path.
 there is a tree by the fence.
 there is a bench under the tree.`,
 };
+
+// Textos de treino em português: frases simples, provérbios e parlendas, e
+// cantigas de roda. Frases curtas e
+// repetitivas, como os originais em inglês: é o que deixa o modelo minúsculo
+// aprender o padrão em poucos minutos.
+const SAMPLES_PT = {
+  1: `bom dia.
+boa tarde.
+boa noite.
+olá, amigo.
+olá, amiga.
+tudo bem.
+
+o sol é quente.
+a lua é clara.
+o céu é azul.
+a grama é verde.
+a chuva é fria.
+o vento é leve.
+o fogo é forte.
+
+o gato dorme no sofá.
+o cachorro corre no quintal.
+o pássaro canta na árvore.
+o peixe nada no lago.
+a menina lê um livro.
+o menino joga bola.
+o padeiro faz o pão.
+
+o gato é pequeno.
+o cachorro é feliz.
+o pássaro é rápido.
+o peixe é calmo.
+a menina é gentil.
+o menino é forte.
+o padeiro é alegre.
+
+eu vejo o sol.
+eu vejo a lua.
+eu vejo a árvore.
+eu vejo o rio.
+eu vejo a estrada.
+eu vejo a casa.
+eu vejo a luz.
+
+você vê as estrelas.
+você vê as nuvens.
+você vê o campo.
+você vê o jardim.
+você vê o portão.
+você vê o morro.
+você vê a cidade.
+
+nós vamos ao rio.
+nós vamos à feira.
+nós vamos para casa.
+nós vamos ao jardim.
+nós andamos de manhã.
+nós andamos à tarde.
+nós andamos juntos.
+
+eles sentam perto do fogo.
+eles sentam perto da janela.
+eles sentam perto da porta.
+eles sentam embaixo da árvore.
+eles falam e riem.
+eles cantam e sorriem.
+eles descansam e esperam.
+
+a maçã vermelha é doce.
+a maçã verde é azeda.
+o limão amarelo é ácido.
+a banana madura é macia.
+a laranja é suculenta.
+a uva roxa é pequena.
+
+a escola abre cedo.
+a professora chega na sala.
+os alunos abrem o caderno.
+a menina faz uma pergunta.
+o menino pensa na resposta.
+a turma aprende junto.
+
+a história tem um começo.
+a história tem um meio.
+a história tem um fim.`,
+  2: `água mole em pedra dura, tanto bate até que fura.
+quem não tem cão, caça com gato.
+de grão em grão, a galinha enche o papo.
+quem espera sempre alcança.
+cada macaco no seu galho.
+devagar se vai ao longe.
+a pressa é inimiga da perfeição.
+casa de ferreiro, espeto de pau.
+quem tem boca vai a roma.
+mais vale um pássaro na mão do que dois voando.
+em boca fechada não entra mosquito.
+quem semeia vento colhe tempestade.
+a união faz a força.
+filho de peixe, peixinho é.
+o que os olhos não veem, o coração não sente.
+
+hoje é domingo, pé de cachimbo.
+o cachimbo é de barro, bate no jarro.
+o jarro é fino, bate no sino.
+o sino é de ouro, bate no touro.
+o touro é valente, bate na gente.
+a gente é fraco, cai no buraco.
+o buraco é fundo, acabou-se o mundo.
+
+batatinha quando nasce, espalha a rama pelo chão.
+menininha quando dorme, põe a mão no coração.
+
+um, dois, feijão com arroz.
+três, quatro, feijão no prato.
+cinco, seis, feijão inglês.
+sete, oito, comer biscoito.
+nove, dez, comer pastéis.
+
+o rato roeu a roupa do rei de roma.
+três pratos de trigo para três tigres tristes.
+o peito do pé do pedro é preto.
+a aranha arranha a rã, a rã arranha a aranha.`,
+  3: `ciranda, cirandinha, vamos todos cirandar.
+vamos dar a meia volta, volta e meia vamos dar.
+o anel que tu me deste era vidro e se quebrou.
+o amor que tu me tinhas era pouco e se acabou.
+
+marcha, soldado, cabeça de papel.
+se não marchar direito, vai preso pro quartel.
+o quartel pegou fogo, a polícia deu sinal.
+acode, acode, acode a bandeira nacional.
+
+como pode o peixe vivo viver fora da água fria?
+como pode o peixe vivo viver fora da água fria?
+como poderei viver, como poderei viver,
+sem a tua, sem a tua, sem a tua companhia?
+
+borboletinha está na cozinha,
+fazendo chocolate para a madrinha.
+poti, poti, perna de pau,
+olho de vidro e nariz de pica-pau, pau, pau.
+
+pirulito que bate bate,
+pirulito que já bateu.
+quem gosta de mim é ela,
+quem gosta dela sou eu.
+
+cai, cai, balão, cai, cai, balão, aqui na minha mão.
+não cai não, não cai não, não cai não, cai na rua do sabão.
+
+sapo cururu, na beira do rio.
+quando o sapo canta, ó maninha, é porque tem frio.
+a mulher do sapo deve estar lá dentro,
+fazendo rendinha, ó maninha, pro seu casamento.`,
+};

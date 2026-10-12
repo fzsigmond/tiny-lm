@@ -111,6 +111,33 @@ nav {
   border-color: rgba(79, 143, 247, 0.2);
 }
 
+/* ---- Language switch ---- */
+
+.lang-switch {
+  order: 2;
+  display: flex;
+  margin-left: 12px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.lang-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.lang-btn.active {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
 /* ---- Pages ---- */
 
 .page {
