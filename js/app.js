@@ -46,6 +46,7 @@ const app = {
       });
       this.updateTrainingPreview();
     }
+    this.showCopyDetail();
   },
 
   // --- Navigation ---
@@ -863,14 +864,20 @@ const app = {
       return;
     }
     const res = CopyCheck.analyze(this.copyIndex, fullText, genStart, partial);
-    for (const t of tokenSpans) {
-      t.span.classList.toggle('gen-copied', CopyCheck.overlaps(res.ranges, t.start, t.end));
+    for (const ts of tokenSpans) {
+      ts.span.classList.toggle('gen-copied', CopyCheck.overlaps(res.ranges, ts.start, ts.end));
     }
     meter.style.display = 'flex';
     document.getElementById('copy-meter-value').textContent = res.totalWords ? `${res.pct}%` : '—';
     document.getElementById('copy-meter-fill').style.width = `${res.pct}%`;
+    this.lastCopy = res;
+    this.showCopyDetail();
+  },
+
+  showCopyDetail() {
+    if (!this.lastCopy) return;
     document.getElementById('copy-meter-detail').textContent =
-      `${res.copiedWords} of ${res.totalWords} generated words`;
+      t('js.copyDetail', { copied: this.lastCopy.copiedWords, total: this.lastCopy.totalWords });
   },
 
   showGenerationSteps(steps) {

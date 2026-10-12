@@ -401,7 +401,7 @@
               <div class="viz-panel">
                 <h4 data-i18n="lab.losschart">Loss Over Time</h4>
                 <canvas id="loss-canvas"></canvas>
-                <p class="viz-note">Compare loss only between runs with the same settings (tokenizer vocab size and context window). A different tokenizer splits the text into different tokens, so the numbers measure different things.</p>
+                <p class="viz-note" data-i18n="lab.lossNote">Compare loss only between runs with the same settings (tokenizer vocab size and context window). A different tokenizer splits the text into different tokens, so the numbers measure different things.</p>
               </div>
               <div class="viz-panel">
                 <h4 data-i18n="lab.embchart">Token Embeddings (2D projection)</h4>
@@ -486,11 +486,11 @@
 
           <div id="generation-output"></div>
           <div id="copy-meter" style="display:none;">
-            <span class="copy-meter-label">Copied from training text</span>
+            <span class="copy-meter-label" data-i18n="lab.copyLabel">Copied from training text</span>
             <div class="copy-meter-track"><div id="copy-meter-fill" class="copy-meter-fill"></div></div>
             <span id="copy-meter-value" class="copy-meter-value">—</span>
             <span id="copy-meter-detail" class="copy-meter-detail"></span>
-            <span class="copy-meter-legend"><span class="gen-copied">highlighted</span> = 3 or more words in a row that also appear in the training text</span>
+            <span class="copy-meter-legend" data-i18n="lab.copyLegend"><span class="gen-copied">highlighted</span> = 3 or more words in a row that also appear in the training text</span>
           </div>
           <div id="generation-steps-viz"></div>
 
