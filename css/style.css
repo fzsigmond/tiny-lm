@@ -1060,6 +1060,77 @@ input[type="file"] {
   border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* Copied from the training text (3+ words in a row) */
+.gen-copied {
+  background: rgba(247, 168, 79, 0.18);
+  color: var(--orange);
+  border-radius: 2px;
+}
+
+#copy-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: -4px 0 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.copy-meter-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.copy-meter-track {
+  flex: 0 1 160px;
+  min-width: 80px;
+  height: 8px;
+  background: var(--bg-input);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.copy-meter-fill {
+  height: 100%;
+  width: 0;
+  background: var(--orange);
+  border-radius: 4px;
+  transition: width 0.2s;
+}
+
+.copy-meter-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  color: var(--orange);
+}
+
+.copy-meter-detail {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.copy-meter-legend {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.copy-meter-legend .gen-copied {
+  padding: 0 4px;
+}
+
+.viz-note {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 /* Generation steps */
 
 #generation-steps-viz h4 {

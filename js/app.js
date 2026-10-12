@@ -387,6 +387,9 @@ const app = {
     this.model = new MiniLM();
     const vocabSize = parseInt(document.getElementById('slider-vocab').value);
     const info = this.model.tokenize(text, vocabSize);
+    // Remember the exact text the model learns from, to spot copied output later
+    this.trainingText = text;
+    this.copyIndex = null;
     this.showTokenInfo(info);
     this.showTokenizationViz(text);
 
@@ -808,6 +811,13 @@ const app = {
     const output = document.getElementById('generation-output');
     output.innerHTML = '';
 
+    // Copy detection: index the training text once per tokenization
+    if (!this.copyIndex && this.trainingText) {
+      this.copyIndex = CopyCheck.buildIndex(this.trainingText);
+    }
+    let fullText = usedSeed;
+    const tokenSpans = [];
+
     // Show seed
     const seedSpan = document.createElement('span');
     seedSpan.className = 'gen-seed';
@@ -829,14 +839,38 @@ const app = {
       span.style.opacity = 0.4 + step.selectedProb * 0.6;
       span.title = `"${step.selected}" (${t('js.confidence', { p: (step.selectedProb * 100).toFixed(1) })})`;
       output.appendChild(span);
+      tokenSpans.push({ span, start: fullText.length, end: fullText.length + step.selected.length });
+      fullText += step.selected;
       tokenIdx++;
+      this.markCopied(fullText, usedSeed.length, tokenSpans, tokenIdx < steps.length);
       if (tokenIdx < steps.length) {
         setTimeout(typeToken, 40);
       } else {
         this.showGenerationSteps(steps);
       }
     };
+    this.markCopied(fullText, usedSeed.length, tokenSpans, steps.length > 0);
     typeToken();
+  },
+
+  // Highlight generated tokens that belong to a run of 3+ words found in the
+  // training text, and update the "% copied" meter. Runs after every token,
+  // so it also works while the output is still being typed out.
+  markCopied(fullText, genStart, tokenSpans, partial) {
+    const meter = document.getElementById('copy-meter');
+    if (!this.copyIndex) {
+      meter.style.display = 'none';
+      return;
+    }
+    const res = CopyCheck.analyze(this.copyIndex, fullText, genStart, partial);
+    for (const t of tokenSpans) {
+      t.span.classList.toggle('gen-copied', CopyCheck.overlaps(res.ranges, t.start, t.end));
+    }
+    meter.style.display = 'flex';
+    document.getElementById('copy-meter-value').textContent = res.totalWords ? `${res.pct}%` : '—';
+    document.getElementById('copy-meter-fill').style.width = `${res.pct}%`;
+    document.getElementById('copy-meter-detail').textContent =
+      `${res.copiedWords} of ${res.totalWords} generated words`;
   },
 
   showGenerationSteps(steps) {
