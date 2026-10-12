@@ -748,4 +748,322 @@ sapo cururu, na beira do rio.
 quando o sapo canta, ó maninha, é porque tem frio.
 a mulher do sapo deve estar lá dentro,
 fazendo rendinha, ó maninha, pro seu casamento.`,
+  // Textos longos (4 a 6): tradição oral brasileira, sem autor conhecido.
+  // Conferidos com coletâneas públicas (Toda Matéria, Wikiquote) em out/2026.
+  // Com mais texto, cada contexto fica menos único: o modelo copia menos e
+  // inventa mais palavras, e um vocabulário maior ajuda.
+  4: `o cravo brigou com a rosa debaixo de uma sacada.
+o cravo saiu ferido e a rosa despedaçada.
+o cravo ficou doente e a rosa foi visitar.
+o cravo teve um desmaio e a rosa pôs-se a chorar.
+
+ciranda, cirandinha, vamos todos cirandar.
+vamos dar a meia volta, volta e meia vamos dar.
+o anel que tu me deste era vidro e se quebrou.
+o amor que tu me tinhas era pouco e se acabou.
+por isso, dona rosa, faz favor de entrar na roda.
+diga um verso bem bonito, diga adeus e vá embora.
+
+terezinha de jesus deu uma queda, foi ao chão.
+acudiram três cavalheiros, todos de chapéu na mão.
+o primeiro foi seu pai, o segundo seu irmão.
+o terceiro foi aquele que a tereza deu a mão.
+
+se essa rua, se essa rua fosse minha,
+eu mandava, eu mandava ladrilhar,
+com pedrinhas, com pedrinhas de brilhante,
+para o meu, para o meu amor passar.
+nessa rua, nessa rua tem um bosque
+que se chama, que se chama solidão.
+dentro dele, dentro dele mora um anjo
+que roubou, que roubou meu coração.
+
+a canoa virou por deixá-la virar.
+foi por causa da maria, que não soube remar.
+se eu fosse um peixinho e soubesse nadar,
+tirava a maria do fundo do mar.
+
+fui no tororó beber água, não achei.
+achei linda morena que no tororó deixei.
+aproveita, minha gente, que uma noite não é nada.
+se não dormir agora, dormirá de madrugada.
+ó dona maria, ó mariazinha,
+entra nesta roda ou ficarás sozinha.
+
+capelinha de melão é de são joão.
+é de cravo, é de rosa, é de manjericão.
+são joão está dormindo, não acorda, não.
+acordai, acordai, acordai, joão.
+
+alecrim, alecrim dourado,
+que nasceu no campo sem ser semeado.
+foi meu amor que me disse assim,
+que a flor do campo é o alecrim.
+
+pombinha branca, o que está fazendo?
+lavando roupa pro casamento.
+vou me lavar, vou me secar,
+vou pra janela pra namorar.
+
+a barata diz que tem sete saias de filó.
+é mentira da barata, ela tem é uma só.
+a barata diz que tem um sapato de veludo.
+é mentira da barata, o pé dela é peludo.
+a barata diz que tem uma cama de marfim.
+é mentira da barata, ela tem é de capim.
+
+caranguejo não é peixe, caranguejo peixe é.
+caranguejo só é peixe na enchente da maré.
+palma, palma, palma, pé, pé, pé.
+roda, roda, roda, caranguejo peixe é.
+
+o sapo não lava o pé, não lava porque não quer.
+ele mora lá na lagoa, não lava o pé porque não quer.
+
+sapo cururu, na beira do rio.
+quando o sapo canta, ó maninha, é que está com frio.
+a mulher do sapo deve estar lá dentro,
+fazendo rendinha, ó maninha, para o casamento.
+
+como pode o peixe vivo viver fora da água fria?
+como poderei viver sem a tua companhia?
+os pastores desta aldeia já me fazem zombaria,
+por me verem assim chorando sem a tua companhia.
+
+pirulito que bate bate, pirulito que já bateu.
+quem gosta de mim é ela, quem gosta dela sou eu.
+
+marcha, soldado, cabeça de papel.
+se não marchar direito, vai preso pro quartel.
+
+cai, cai, balão, cai, cai, balão, na rua do sabão.
+não cai não, não cai não, não cai não, cai aqui na minha mão.
+
+o pião entrou na roda, ó pião.
+roda, pião, bambeia, pião.
+sapateia no terreiro, ó pião.
+mostra a tua figura, ó pião.
+
+cachorrinho está latindo lá no fundo do quintal.
+cala a boca, cachorrinho, deixa o meu benzinho entrar.
+
+ai, bota aqui, ai, bota aqui o seu pezinho,
+o seu pezinho bem juntinho com o meu.
+e depois não vá dizer que você se arrependeu.
+
+borboletinha está na cozinha,
+fazendo chocolate para a madrinha.
+poti, poti, perna de pau,
+olho de vidro e nariz de pica-pau.
+
+bambalalão, senhor capitão,
+espada na cinta, ginete na mão.`,
+  5: `água mole em pedra dura, tanto bate até que fura.
+quem não tem cão, caça com gato.
+de grão em grão, a galinha enche o papo.
+quem espera sempre alcança.
+cada macaco no seu galho.
+devagar se vai ao longe.
+a pressa é inimiga da perfeição.
+casa de ferreiro, espeto de pau.
+quem tem boca vai a roma.
+mais vale um pássaro na mão do que dois voando.
+em boca fechada não entra mosca.
+quem semeia vento colhe tempestade.
+a união faz a força.
+filho de peixe, peixinho é.
+o que os olhos não veem, o coração não sente.
+
+deus ajuda quem cedo madruga.
+quem com ferro fere, com ferro será ferido.
+cachorro que ladra não morde.
+quem ri por último ri melhor.
+antes tarde do que nunca.
+antes só do que mal acompanhado.
+diga-me com quem andas e eu te direi quem és.
+quem vê cara não vê coração.
+nem tudo que reluz é ouro.
+uma andorinha só não faz verão.
+a cavalo dado não se olham os dentes.
+quem não arrisca não petisca.
+quem procura acha.
+depois da tempestade vem a bonança.
+o hábito não faz o monge.
+gato escaldado tem medo de água fria.
+águas passadas não movem moinhos.
+a mentira tem perna curta.
+quem conta um conto aumenta um ponto.
+onde há fumaça, há fogo.
+de pequenino é que se torce o pepino.
+pau que nasce torto morre torto.
+quem cala consente.
+o seguro morreu de velho.
+cada um sabe onde o sapato aperta.
+quem tudo quer nada tem.
+o barato sai caro.
+quem avisa amigo é.
+quem dá aos pobres empresta a deus.
+há males que vêm por bem.
+a ocasião faz o ladrão.
+a fome é o melhor tempero.
+saco vazio não para em pé.
+quem não chora não mama.
+pela boca morre o peixe.
+para bom entendedor, meia palavra basta.
+cada cabeça, uma sentença.
+o pior cego é aquele que não quer ver.
+quem com porcos se mistura, farelo come.
+santo de casa não faz milagre.
+macaco velho não mete a mão em cumbuca.
+mais vale prevenir do que remediar.
+roupa suja se lava em casa.
+quem não deve não teme.
+em terra de cego, quem tem um olho é rei.
+não se pode fazer omelete sem ovos.
+não deixe para amanhã o que pode fazer hoje.
+quem casa quer casa.
+o apressado come cru.
+devagar com o andor que o santo é de barro.
+de noite todos os gatos são pardos.
+a esperança é a última que morre.
+errar é humano.
+mais vale quem deus ajuda do que quem cedo madruga.
+quem canta seus males espanta.
+um dia é da caça, o outro é do caçador.
+não há mal que sempre dure, nem bem que nunca se acabe.
+o que é do homem o bicho não come.
+panela velha é que faz comida boa.
+toda panela tem sua tampa.
+amigos, amigos, negócios à parte.
+é dando que se recebe.
+quem ama o feio bonito lhe parece.
+uma mão lava a outra.
+juntou a fome com a vontade de comer.
+o prometido é devido.
+em casa onde não há pão, todos ralham e ninguém tem razão.
+cachorro mordido por cobra tem medo de linguiça.
+a fruta não cai longe do pé.
+quem vai ao mar perde o lugar.
+quem foi ao vento perdeu o assento.
+tristezas não pagam dívidas.
+cada um colhe o que planta.
+de boas intenções o inferno está cheio.
+o olho do dono engorda o cavalo.
+quem não pode com o pote não pega na rodilha.
+a noite é boa conselheira.
+o bom filho à casa torna.
+mais vale um gosto do que seis vinténs na algibeira.
+o uso do cachimbo faz a boca torta.
+devagar e sempre.
+pimenta nos olhos dos outros é refresco.
+agora é tarde, inês é morta.
+a voz do povo é a voz de deus.`,
+  6: `hoje é domingo, pede cachimbo.
+o cachimbo é de barro, bate no jarro.
+o jarro é de ouro, bate no touro.
+o touro é valente, bate na gente.
+a gente é fraco, cai no buraco.
+o buraco é fundo, acabou-se o mundo.
+
+um, dois, feijão com arroz.
+três, quatro, feijão no prato.
+cinco, seis, falar inglês.
+sete, oito, comer biscoito.
+nove, dez, comer pastéis.
+
+cadê o toucinho que estava aqui?
+o gato comeu.
+cadê o gato?
+foi pro mato.
+cadê o mato?
+o fogo queimou.
+cadê o fogo?
+a água apagou.
+cadê a água?
+o boi bebeu.
+cadê o boi?
+foi carregar trigo.
+cadê o trigo?
+a galinha espalhou.
+cadê a galinha?
+foi botar ovo.
+cadê o ovo?
+o frade comeu.
+cadê o frade?
+tá no convento.
+
+uni, duni, tê, salamê, minguê.
+um sorvete colorê, o escolhido foi você.
+
+minha mãe mandou eu escolher este daqui.
+mas como eu sou teimoso, eu escolho este daqui.
+
+rei, capitão, soldado, ladrão.
+moça bonita do meu coração.
+
+dedo mindinho, seu vizinho,
+pai de todos, fura bolo, mata piolho.
+
+serra, serra, serrador.
+serra o papo do vovô.
+quantas tábuas já serrou?
+uma, duas, três.
+
+chuva e sol, casamento de espanhol.
+sol e chuva, casamento de viúva.
+
+meio-dia, panela no fogo, barriga vazia.
+
+suco gelado, cabelo arrepiado.
+qual é a letra do seu namorado?
+
+corre cutia, na casa da tia.
+corre cipó, na casa da avó.
+lencinho na mão, caiu no chão.
+moça bonita do meu coração.
+
+o macaco foi à feira, não teve o que comprar.
+comprou uma cadeira pra comadre se sentar.
+a cadeira esborrachou, coitada da comadre.
+foi parar no corredor.
+
+o rato roeu a roupa do rei de roma.
+três pratos de trigo para três tigres tristes.
+o peito do pé do pedro é preto.
+a aranha arranha a rã, a rã arranha a aranha.
+o sabiá não sabia que o sábio sabia que o sabiá não sabia assobiar.
+a vaca malhada foi molhada por outra vaca molhada e malhada.
+bagre branco, branco bagre.
+o tempo perguntou ao tempo quanto tempo o tempo tem.
+o tempo respondeu ao tempo que o tempo tem o tempo que o tempo tem.
+num ninho de mafagafos há sete mafagafinhos.
+quando a mafagafa gafa, gafam os sete mafagafinhos.
+o doce perguntou pro doce qual é o doce mais doce que o doce de batata-doce.
+o doce respondeu pro doce que o doce mais doce que o doce de batata-doce é o doce de doce de batata-doce.
+a pia perto do pinto, o pinto perto da pia.
+quanto mais a pia pinga, mais o pinto pia.
+paca, tatu, cutia não.
+
+batatinha quando nasce, se esparrama pelo chão.
+menininha quando dorme, põe a mão no coração.
+
+lá no fundo do quintal tem um tacho de melado.
+quem não sabe cantar verso é melhor ficar calado.
+
+sete e sete são quatorze, com mais sete, vinte e um.
+tenho sete namorados, só posso casar com um.
+
+quem quiser saber meu nome dê uma volta no jardim.
+o meu nome está escrito numa folha de jasmim.
+
+boi, boi, boi, boi da cara preta.
+pega esse menino que tem medo de careta.
+
+a galinha do vizinho bota ovo amarelinho.
+bota um, bota dois, bota três, bota quatro.
+bota cinco, bota seis, bota sete, bota oito.
+bota nove, bota dez.
+
+galinha choca comeu minhoca.
+saiu pulando que nem pipoca.`,
 };
