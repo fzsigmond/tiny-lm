@@ -935,7 +935,6 @@ o que é do homem o bicho não come.
 panela velha é que faz comida boa.
 toda panela tem sua tampa.
 amigos, amigos, negócios à parte.
-é dando que se recebe.
 quem ama o feio bonito lhe parece.
 uma mão lava a outra.
 juntou a fome com a vontade de comer.
@@ -1055,9 +1054,6 @@ tenho sete namorados, só posso casar com um.
 
 quem quiser saber meu nome dê uma volta no jardim.
 o meu nome está escrito numa folha de jasmim.
-
-boi, boi, boi, boi da cara preta.
-pega esse menino que tem medo de careta.
 
 a galinha do vizinho bota ovo amarelinho.
 bota um, bota dois, bota três, bota quatro.
