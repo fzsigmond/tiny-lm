@@ -14,6 +14,9 @@ class MiniLM {
     this.learningRate = config.learningRate || 0.05;
     this.batchSize = config.batchSize || 32;
     this.maxVocabSize = config.maxVocabSize || 150;
+    // Share of training examples whose oldest tokens are hidden behind <BOS>
+    // (see trainStep). Teaches the model to continue from short prompts.
+    this.contextDropout = config.contextDropout ?? 0.15;
 
     this.tokenizer = null;
     this.vocabSize = 0;
@@ -149,13 +152,31 @@ class MiniLM {
       idx[i] = Math.floor(Math.random() * X.length);
     }
 
+    // Context dropout: in some examples, hide the start of the context behind
+    // <BOS> tokens (keeping at least the last one). Generation from a short
+    // prompt starts with a context full of <BOS>, and the text itself has only
+    // one such window, so this gives the model practice at continuing from
+    // a few tokens instead of always seeing a full window.
+    const ctxs = new Array(B);
+    for (let b = 0; b < B; b++) {
+      const src = X[idx[b]];
+      if (this.contextDropout > 0 && blockSize > 1 && Math.random() < this.contextDropout) {
+        const c = Int32Array.from(src);
+        const hide = 1 + Math.floor(Math.random() * (blockSize - 1));
+        for (let t = 0; t < hide; t++) c[t] = this.tokenizer.BOS_ID;
+        ctxs[b] = c;
+      } else {
+        ctxs[b] = src;
+      }
+    }
+
     // ---- FORWARD PASS ----
 
     // 1. Embedding lookup → flatten
     const flat = MiniLM.zeros2D(B, flatSize);
     for (let b = 0; b < B; b++) {
       for (let t = 0; t < blockSize; t++) {
-        const ci = X[idx[b]][t];
+        const ci = ctxs[b][t];
         const offset = t * embedDim;
         for (let e = 0; e < embedDim; e++) {
           flat[b][offset + e] = this.C[ci][e];
@@ -280,7 +301,7 @@ class MiniLM {
     const dC = MiniLM.zeros2D(vocabSize, embedDim);
     for (let b = 0; b < B; b++) {
       for (let t = 0; t < blockSize; t++) {
-        const ci = X[idx[b]][t];
+        const ci = ctxs[b][t];
         const offset = t * embedDim;
         for (let e = 0; e < embedDim; e++) {
           dC[ci][e] += dflat[b][offset + e];
@@ -361,7 +382,7 @@ class MiniLM {
         : this.losses.reduce((a, b) => a + b, 0) / this.losses.length,
       topPredictions: topProbs.slice(0, 10),
       targetToken: this.tokenizer.vocab[Y[idx[0]]],
-      contextTokens: Array.from(X[idx[0]]).map(i => this.tokenizer.vocab[i]),
+      contextTokens: Array.from(ctxs[0]).map(i => this.tokenizer.vocab[i]),
     };
   }
 
