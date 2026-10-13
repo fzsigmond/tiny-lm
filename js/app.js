@@ -74,6 +74,7 @@ const app = {
       reader.onload = (ev) => {
         document.getElementById('training-text').value = ev.target.result;
         this.updateTextStats();
+        this.suggestVocabSize();
       };
       reader.readAsText(file);
     });
@@ -81,6 +82,7 @@ const app = {
     // Text input
     document.getElementById('training-text').addEventListener('input', () => {
       this.updateTextStats();
+      this.suggestVocabSize();
     });
 
     // Sample texts
@@ -373,6 +375,17 @@ const app = {
     const text = set[name] || SAMPLES[name] || '';
     document.getElementById('training-text').value = text;
     this.updateTextStats();
+    this.suggestVocabSize();
+  },
+
+  // When the text changes, start the vocab slider at a size that fits it
+  // (see BPETokenizer.suggestVocabSize). The slider can still be moved.
+  suggestVocabSize() {
+    const slider = document.getElementById('slider-vocab');
+    const text = document.getElementById('training-text').value;
+    const size = BPETokenizer.suggestVocabSize(text, 150, +slider.max);
+    slider.value = size;
+    document.getElementById('val-vocab').textContent = size;
   },
 
   // --- Tokenization ---

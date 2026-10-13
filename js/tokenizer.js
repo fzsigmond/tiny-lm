@@ -21,6 +21,19 @@ class BPETokenizer {
     this.NUM_SPECIAL = 4;
   }
 
+  // --- Starting vocabulary size for a text ---
+  // Bigger texts have more distinct words to learn, and too few tokens make
+  // the model build words out of tiny pieces, which is how it invents words.
+  // So the starting size is two tokens per distinct word, between min and
+  // max. On the sample texts a bigger vocabulary gave more real words every
+  // time; short texts stop merging early anyway (no pair repeats), so they
+  // end up with fewer tokens than the slider shows.
+  static suggestVocabSize(text, min = 150, max = 300) {
+    const distinct = new Set(text.toLowerCase().match(/\p{L}+/gu) || []).size;
+    const size = Math.round((2 * distinct) / 10) * 10;
+    return Math.min(max, Math.max(min, size));
+  }
+
   // --- Train BPE on text, returns the final token ID sequence ---
   train(text, maxVocabSize = 150) {
     // Step 1: Reserve special tokens, then build base character vocabulary
