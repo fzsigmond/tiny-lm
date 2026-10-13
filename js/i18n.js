@@ -142,6 +142,8 @@ const I18N = {
     'lab.back': 'Voltar ao treino',
     'lab.copyLabel': 'Copiado do texto de treino',
     'lab.copyLegend': '<span class="gen-copied">destacado</span> = 3 ou mais palavras seguidas que também aparecem no texto de treino',
+    'lab.dictMode': 'Modo dicionário',
+    'lab.dictNote': 'Ligado, o modelo só consegue terminar uma palavra que aparece no texto de treino. A palavra certa passa a vir de uma regra por cima do modelo, não do próprio modelo, como os sistemas reais fazem com filtros.',
 
     // --- strings used in JavaScript ---
     'js.minChars': 'Coloque pelo menos 20 caracteres de texto de treino.',

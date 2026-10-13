@@ -78,12 +78,44 @@ class MiniLM {
     this.tokenizer = new BPETokenizer();
     this.rawTokenIds = this.tokenizer.train(text, maxVocabSize || this.maxVocabSize);
     this.vocabSize = this.tokenizer.vocabSize;
+    this.buildDictionary(text);
 
     return {
       vocabSize: this.vocabSize,
       numMerges: this.tokenizer.merges.length,
       compressionRatio: (text.length / this.rawTokenIds.length).toFixed(1),
     };
+  }
+
+  // Words of the training text, for the optional dictionary mode in
+  // generate(). `words` holds every word, `prefixes` every start of a word
+  // ("c", "ca", "cas", "casa"), both lowercase.
+  buildDictionary(text) {
+    const words = new Set((text.toLowerCase().match(/\p{L}+/gu)) || []);
+    const prefixes = new Set();
+    for (const w of words) {
+      for (let i = 1; i <= w.length; i++) prefixes.add(w.slice(0, i));
+    }
+    this.dictionary = { words, prefixes };
+  }
+
+  // Dictionary mode: would this token keep the text inside known words?
+  // `partial` is the word being written so far (letters at the end of the
+  // text). A token that starts with a letter continues it; anything else
+  // (a space, punctuation, a line break, the end) closes it.
+  _fitsDictionary(partial, token) {
+    const { words, prefixes } = this.dictionary;
+    const m = token.match(/^\p{L}+/u);
+    if (m) {
+      // Continuing the word: it must still be the start of a known word
+      // (and since tokens never cross words, the token ends here)
+      return prefixes.has((partial + m[0]).toLowerCase());
+    }
+    // Closing the word: it must be a whole known word
+    if (partial && !words.has(partial.toLowerCase())) return false;
+    // A new word may start after a space (" casa"): check its start too
+    const next = token.match(/\p{L}+$/u);
+    return !next || prefixes.has(next[0].toLowerCase());
   }
 
   // Step 3: Build X/Y training pairs and init weights (uses current blockSize/embedDim)
@@ -367,7 +399,7 @@ class MiniLM {
 
   // --- Text generation ---
 
-  generate(seed, length, temperature = 0.8, topK = 0, topP = 0, repetitionPenalty = 1.0) {
+  generate(seed, length, temperature = 0.8, topK = 0, topP = 0, repetitionPenalty = 1.0, dictionaryMode = false) {
     if (!this.C || !this.tokenizer) return { text: seed, steps: [], seed };
 
     const { blockSize, embedDim, hiddenSize, vocabSize } = this;
@@ -430,6 +462,25 @@ class MiniLM {
       logits[this.tokenizer.PAD_ID] = -Infinity;
       logits[this.tokenizer.BOS_ID] = -Infinity;
       logits[this.tokenizer.UNK_ID] = -Infinity;
+
+      // Dictionary mode: a rule on top of the model, not part of it. Rule out
+      // tokens that would finish (or head towards) a word that is not in the
+      // training text. If that rules out everything, keep the model's choice.
+      if (dictionaryMode && this.dictionary) {
+        const partial = (result.match(/\p{L}+$/u) || [''])[0];
+        const masked = new Float64Array(logits);
+        let any = false;
+        for (let j = this.tokenizer.NUM_SPECIAL; j < vocabSize; j++) {
+          if (masked[j] === -Infinity) continue;
+          if (this._fitsDictionary(partial, this.tokenizer.vocab[j])) any = true;
+          else masked[j] = -Infinity;
+        }
+        // Ending the text also closes the current word
+        if (partial && !this.dictionary.words.has(partial.toLowerCase())) {
+          masked[this.tokenizer.EOS_ID] = -Infinity;
+        }
+        if (any) logits.set(masked);
+      }
 
       // Repetition penalty (before temperature scaling)
       if (repetitionPenalty !== 1.0) {

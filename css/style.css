@@ -1124,6 +1124,34 @@ input[type="file"] {
   padding: 0 4px;
 }
 
+/* Dictionary mode: optional rule on top of the model during generation */
+.dict-mode {
+  margin: -4px 0 16px;
+}
+
+.dict-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.dict-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.dict-note {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 /* Long Portuguese samples: only offered when the page is in Portuguese */
 html:not([lang="pt-BR"]) .pt-only {
   display: none;

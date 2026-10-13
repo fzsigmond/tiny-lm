@@ -801,13 +801,14 @@ const app = {
     const topP = parseFloat(document.getElementById('slider-topp').value);
     const repPen = parseFloat(document.getElementById('slider-reppen').value);
     const length = parseInt(document.getElementById('slider-length').value);
+    const dictionaryMode = document.getElementById('toggle-dict').checked;
 
     if (!this.model.C) {
       alert(t('js.trainFirst'));
       return;
     }
 
-    const { steps, seed: usedSeed } = this.model.generate(seed, length, temp, topK, topP, repPen);
+    const { steps, seed: usedSeed } = this.model.generate(seed, length, temp, topK, topP, repPen, dictionaryMode);
 
     const output = document.getElementById('generation-output');
     output.innerHTML = '';

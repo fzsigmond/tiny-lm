@@ -483,6 +483,14 @@
             </div>
           </div>
 
+          <div class="dict-mode">
+            <label class="dict-toggle">
+              <input type="checkbox" id="toggle-dict">
+              <span data-i18n="lab.dictMode">Dictionary mode</span>
+            </label>
+            <p class="dict-note" data-i18n="lab.dictNote">When on, the model can only finish a word that appears in the training text. The right word then comes from a rule on top of the model, not from the model itself, the way real systems use filters.</p>
+          </div>
+
           <div class="gen-input-row">
             <input type="text" id="prompt-input" data-i18n-placeholder="lab.prompt" placeholder="Type a seed prompt (e.g. &quot;The &quot;)...">
             <button class="btn btn-primary" id="btn-generate" data-i18n="lab.generate">Generate</button>
